@@ -20,14 +20,23 @@ model Bookmark {
   entities        String?   // JSON: {hashtags[], urls[], mentions[], tools[], tweetType}
   enrichedAt      DateTime? // when AI enrichment last ran — drives incremental processing
   enrichmentMeta  String?   // JSON: {sentiment, people[], companies[]} from batch enrichment
-  source          String    @default("bookmark")  // "bookmark" | "like"
+  source          String    @default("bookmark")  // "bookmark" | "like" | "x" | "history-import" | "demo"
   mediaItems    MediaItem[]
   categories    BookmarkCategory[]
+
+  // Yadorigi 拡張フィールド
+  status            BookmarkStatus @default(TO_READ)
+  statusUpdatedAt   DateTime       @default(now())
+  lastOpenedAt      DateTime?
+  openCount         Int            @default(0)
+  implicitClusterId String?
+  actionLinks       ActionLink[]
 
   @@index([authorHandle])
   @@index([tweetCreatedAt])
   @@index([enrichedAt])
   @@index([source])
+  @@index([status])
 }
 
 model Category {
@@ -79,4 +88,48 @@ model ImportJob {
 model Setting {
   key   String @id
   value String
+}
+
+enum BookmarkStatus {
+  TO_READ
+  IN_PROGRESS
+  DONE
+  EVERGREEN
+}
+
+model ActionItem {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  createdAt   DateTime     @default(now())
+  archivedAt  DateTime?
+  actionLinks ActionLink[]
+}
+
+model ActionLink {
+  id         String     @id @default(cuid())
+  bookmarkId String
+  actionId   String
+  note       String?
+  createdAt  DateTime   @default(now())
+  bookmark   Bookmark   @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  actionItem ActionItem @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@unique([bookmarkId, actionId])
+}
+
+model ImplicitCluster {
+  id        String   @id @default(cuid())
+  type      String   // "time-proximity" | "shared-entity"
+  label     String?
+  weight    Float    @default(1.0)
+  createdAt DateTime @default(now())
+}
+
+model BehaviorLog {
+  id         String   @id @default(cuid())
+  type       String   // "session_start" | "bookmark_open" | "bookmark_create" | "bookmark_delete"
+  bookmarkId String?
+  timestamp  DateTime @default(now())
 }

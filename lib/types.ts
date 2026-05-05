@@ -14,6 +14,24 @@ export interface BookmarkCategory {
   confidence: number | null
 }
 
+export type BookmarkStatus = 'TO_READ' | 'IN_PROGRESS' | 'DONE' | 'EVERGREEN'
+
+export interface ActionItem {
+  id: string
+  name: string
+  description: string | null
+  color: string | null
+  createdAt: string
+  archivedAt: string | null
+}
+
+export interface ActionLink {
+  id: string
+  actionId: string
+  note: string | null
+  actionItem: ActionItem
+}
+
 export interface BookmarkWithMedia {
   id: string
   tweetId: string
@@ -24,6 +42,12 @@ export interface BookmarkWithMedia {
   importedAt?: string
   mediaItems: MediaItem[]
   categories: BookmarkCategory[]
+  // Yadorigi 拡張
+  status?: BookmarkStatus
+  statusUpdatedAt?: string
+  lastOpenedAt?: string | null
+  openCount?: number
+  actionLinks?: ActionLink[]
 }
 
 export interface Category {

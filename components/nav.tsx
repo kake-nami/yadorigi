@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Command,
   Bookmark,
+  Kanban,
+  Zap,
 } from 'lucide-react'
 
 interface NavItem {
@@ -25,9 +27,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/kanban', label: 'Kanban', icon: Kanban },
   { href: '/ai-search', label: 'AI Search', icon: Sparkles },
   { href: '/bookmarks', label: 'Browse', icon: Search },
   { href: '/mindmap', label: 'Mindmap', icon: GitBranch },
+  { href: '/actions', label: 'Actions', icon: Zap },
   { href: '/import', label: 'Import', icon: Upload },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]

@@ -105,6 +105,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       source: bookmark.source,
       tweetCreatedAt: bookmark.tweetCreatedAt?.toISOString() ?? null,
       importedAt: bookmark.importedAt.toISOString(),
+      status: bookmark.status,
+      statusUpdatedAt: bookmark.statusUpdatedAt.toISOString(),
+      lastOpenedAt: bookmark.lastOpenedAt?.toISOString() ?? null,
+      openCount: bookmark.openCount,
       mediaItems: bookmark.mediaItems.map((m) => ({
         id: m.id,
         type: m.type,
