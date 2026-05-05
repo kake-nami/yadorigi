@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { BookmarkIcon, Tag, Image, Layers, Upload, Sparkles, Search, ArrowRight, TrendingUp, Bookmark } from 'lucide-react'
 import prisma from '@/lib/db'
 import BookmarkCard from '@/components/bookmark-card'
@@ -150,6 +151,12 @@ function StatCard({ label, value, icon: Icon, iconColor, iconBg, borderColor, tr
 }
 
 export default async function DashboardPage() {
+  // 初回訪問はオンボーディングへ
+  const onboardingSetting = await prisma.setting.findUnique({ where: { key: 'onboarding_completed' } }).catch(() => null)
+  if (!onboardingSetting || onboardingSetting.value !== 'true') {
+    redirect('/onboarding')
+  }
+
   const data = await getDashboardData()
 
   if (data.totalBookmarks === 0) {
