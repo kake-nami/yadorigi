@@ -19,7 +19,7 @@ export async function GET() {
     },
   });
 
-  const formatted = bookmarks.map(b => ({
+  const formatted = bookmarks.map((b) => ({
     id: b.id,
     tweetId: b.tweetId,
     text: b.text,
@@ -33,14 +33,14 @@ export async function GET() {
     lastOpenedAt: b.lastOpenedAt?.toISOString() ?? null,
     openCount: b.openCount,
     mediaItems: b.mediaItems,
-    categories: b.categories.map(bc => ({
+    categories: b.categories.map((bc) => ({
       id: bc.category.id,
       name: bc.category.name,
       slug: bc.category.slug,
       color: bc.category.color,
       confidence: bc.confidence,
     })),
-    actionLinks: b.actionLinks.map(al => ({
+    actionLinks: b.actionLinks.map((al) => ({
       id: al.id,
       actionId: al.actionId,
       note: al.note,
