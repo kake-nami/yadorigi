@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { logBehavior } from '@/lib/behavior-tracker'
 
 interface XTweet {
   id: string
@@ -39,21 +40,23 @@ async function getValidToken(): Promise<string | null> {
     const refreshToken = await prisma.setting.findUnique({ where: { key: 'x_oauth_refresh_token' } })
     if (!refreshToken?.value) return null
 
-    const clientId = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })
-    const clientSecret = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_secret' } })
-    if (!clientId?.value) return null
+    const clientIdSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })
+    const clientSecretSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_secret' } })
+    const resolvedClientId = process.env.X_OAUTH_CLIENT_ID?.trim() ?? clientIdSetting?.value
+    const resolvedClientSecret = process.env.X_OAUTH_CLIENT_SECRET?.trim() ?? clientSecretSetting?.value
+    if (!resolvedClientId) return null
 
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken.value,
-      client_id: clientId.value,
+      client_id: resolvedClientId,
     })
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/x-www-form-urlencoded',
     }
-    if (clientSecret?.value) {
-      headers['Authorization'] = `Basic ${Buffer.from(`${clientId.value}:${clientSecret.value}`).toString('base64')}`
+    if (resolvedClientSecret) {
+      headers['Authorization'] = `Basic ${Buffer.from(`${resolvedClientId}:${resolvedClientSecret}`).toString('base64')}`
     }
 
     const res = await fetch('https://api.x.com/2/oauth2/token', {
@@ -173,6 +176,12 @@ export async function POST(req: NextRequest) {
 
     nextToken = data.meta?.next_token
     if (!nextToken) break
+  }
+
+  // 実データが入ったのでデモカードを削除し、行動ログを記録
+  if (imported > 0) {
+    await prisma.bookmark.deleteMany({ where: { source: 'demo' } })
+    await logBehavior('bookmark_create')
   }
 
   return NextResponse.json({ imported, skipped, total })

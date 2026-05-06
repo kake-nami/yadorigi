@@ -24,10 +24,14 @@ export async function GET(req: NextRequest) {
   }
 
   const codeVerifier = await prisma.setting.findUnique({ where: { key: 'x_oauth_code_verifier' } })
-  const clientId = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })
-  const clientSecret = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_secret' } })
+  const clientIdSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })
+  const clientSecretSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_secret' } })
 
-  if (!codeVerifier?.value || !clientId?.value) {
+  // 環境変数 → DB設定 の順でフォールバック
+  const resolvedClientId = process.env.X_OAUTH_CLIENT_ID?.trim() ?? clientIdSetting?.value
+  const resolvedClientSecret = process.env.X_OAUTH_CLIENT_SECRET?.trim() ?? clientSecretSetting?.value
+
+  if (!codeVerifier?.value || !resolvedClientId) {
     return NextResponse.redirect(`${importPage}?x_error=missing_config`)
   }
 
@@ -39,7 +43,7 @@ export async function GET(req: NextRequest) {
     code,
     redirect_uri: redirectUri,
     code_verifier: codeVerifier.value,
-    client_id: clientId.value,
+    client_id: resolvedClientId,
   })
 
   const headers: Record<string, string> = {
@@ -47,8 +51,8 @@ export async function GET(req: NextRequest) {
   }
 
   // If client secret is set, use Basic auth (confidential client)
-  if (clientSecret?.value) {
-    headers['Authorization'] = `Basic ${Buffer.from(`${clientId.value}:${clientSecret.value}`).toString('base64')}`
+  if (resolvedClientSecret) {
+    headers['Authorization'] = `Basic ${Buffer.from(`${resolvedClientId}:${resolvedClientSecret}`).toString('base64')}`
   }
 
   const tokenRes = await fetch('https://api.x.com/2/oauth2/token', {

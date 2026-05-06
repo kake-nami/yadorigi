@@ -3,10 +3,14 @@ import prisma from '@/lib/db'
 import crypto from 'crypto'
 
 export async function GET(req: NextRequest) {
-  const clientId = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })
-  if (!clientId?.value) {
+  // 環境変数 → DB設定 の順でフォールバック
+  const envClientId = process.env.X_OAUTH_CLIENT_ID?.trim()
+  const clientIdSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })
+  const resolvedClientId = envClientId ?? clientIdSetting?.value
+  if (!resolvedClientId) {
     return NextResponse.json({ error: 'X OAuth Client ID not configured' }, { status: 400 })
   }
+  const clientId = { value: resolvedClientId }
 
   // Generate PKCE code verifier & challenge
   const codeVerifier = crypto.randomBytes(32).toString('base64url')
