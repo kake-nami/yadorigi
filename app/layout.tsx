@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Nav from '@/components/nav'
 import CommandPalette from '@/components/command-palette'
+import { SessionTracker } from '@/components/session-tracker'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,6 +33,7 @@ export default function RootLayout({
           {children}
         </main>
         <CommandPalette />
+        <SessionTracker />
       </body>
     </html>
   )

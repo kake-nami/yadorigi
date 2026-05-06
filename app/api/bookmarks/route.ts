@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { logBehavior } from '@/lib/behavior-tracker'
 
 const DEFAULT_PAGE = 1
 const DEFAULT_LIMIT = 24
@@ -20,6 +21,7 @@ export async function DELETE(): Promise<NextResponse> {
       prisma.bookmark.deleteMany({}),
       prisma.category.deleteMany({}),
     ])
+    await logBehavior('bookmark_delete')
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Clear bookmarks error:', err)

@@ -48,6 +48,8 @@ export interface BookmarkWithMedia {
   lastOpenedAt?: string | null
   openCount?: number
   actionLinks?: ActionLink[]
+  implicitClusterId?: string | null
+  clusterSize?: number
 }
 
 export interface Category {

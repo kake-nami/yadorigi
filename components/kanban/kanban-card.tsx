@@ -87,6 +87,19 @@ export function KanbanCard({ bookmark }: Props) {
               + 行動予定
             </button>
           )}
+
+          {/* 暗黙クラスタラベル: UIには小さく、控えめに表示するだけ */}
+          {bookmark.implicitClusterId && bookmark.clusterSize && bookmark.clusterSize > 1 && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-full"
+              style={{
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              他に{bookmark.clusterSize - 1}件
+            </span>
+          )}
         </div>
       </div>
 

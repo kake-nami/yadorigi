@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { parseBookmarksJson } from '@/lib/parser'
+import { logBehavior } from '@/lib/behavior-tracker'
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let formData: FormData
@@ -123,6 +124,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       processedCount: importedCount,
     },
   })
+
+  if (importedCount > 0) {
+    await logBehavior('bookmark_create')
+  }
 
   return NextResponse.json({
     jobId: importJob.id,

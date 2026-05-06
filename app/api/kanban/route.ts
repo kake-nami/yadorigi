@@ -19,6 +19,20 @@ export async function GET() {
     },
   });
 
+  // クラスタIDごとの件数を一括取得（N+1回避）
+  const clusterIds = [...new Set(bookmarks.map(b => b.implicitClusterId).filter(Boolean))] as string[];
+  const clusterSizeMap = new Map<string, number>();
+  if (clusterIds.length > 0) {
+    const counts = await prisma.bookmark.groupBy({
+      by: ['implicitClusterId'],
+      where: { implicitClusterId: { in: clusterIds } },
+      _count: true,
+    });
+    for (const row of counts) {
+      if (row.implicitClusterId) clusterSizeMap.set(row.implicitClusterId, row._count);
+    }
+  }
+
   const formatted = bookmarks.map((b) => ({
     id: b.id,
     tweetId: b.tweetId,
@@ -32,6 +46,8 @@ export async function GET() {
     statusUpdatedAt: b.statusUpdatedAt.toISOString(),
     lastOpenedAt: b.lastOpenedAt?.toISOString() ?? null,
     openCount: b.openCount,
+    implicitClusterId: b.implicitClusterId,
+    clusterSize: b.implicitClusterId ? clusterSizeMap.get(b.implicitClusterId) ?? 1 : null,
     mediaItems: b.mediaItems,
     categories: b.categories.map((bc) => ({
       id: bc.category.id,
