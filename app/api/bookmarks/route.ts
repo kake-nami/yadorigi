@@ -12,7 +12,12 @@ function parseIntParam(value: string | null, defaultValue: number): number {
   return isNaN(parsed) || parsed < 1 ? defaultValue : parsed
 }
 
-export async function DELETE(): Promise<NextResponse> {
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  // H-4: CSRF 対策。クロスサイトフォームはカスタムヘッダーを付与できない。
+  if (req.headers.get('X-Requested-With') !== 'XMLHttpRequest') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
     // Delete media items and category links first (cascade), then bookmarks
     await prisma.$transaction([

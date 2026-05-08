@@ -20,6 +20,10 @@ export default function SetupPage() {
     if (recoveryKey) {
       navigator.clipboard.writeText(recoveryKey);
       setSaved(true);
+      // L-3: 60秒後にクリップボードをクリア（Windowsのクリップボード履歴対策）
+      setTimeout(() => {
+        navigator.clipboard.writeText('').catch(() => {});
+      }, 60_000);
     }
   }
 

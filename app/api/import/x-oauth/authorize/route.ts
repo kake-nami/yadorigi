@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import crypto from 'crypto'
 
+// H-3: 信頼済みオリジンは環境変数で固定。動的ホスト検出は Open Redirect の素地になる。
+function getTrustedOrigin(): string {
+  return process.env.YADORIGI_BASE_URL?.trim().replace(/\/$/, '') ?? 'http://localhost:3000'
+}
+
 export async function GET(req: NextRequest) {
   // 環境変数 → DB設定 の順でフォールバック
   const envClientId = process.env.X_OAUTH_CLIENT_ID?.trim()
@@ -10,28 +15,18 @@ export async function GET(req: NextRequest) {
   if (!resolvedClientId) {
     return NextResponse.json({ error: 'X OAuth Client ID not configured' }, { status: 400 })
   }
-  const clientId = { value: resolvedClientId }
 
-  // Generate PKCE code verifier & challenge
+  // C-2: code_verifier と state をDBではなく HttpOnly Cookie に保存
   const codeVerifier = crypto.randomBytes(32).toString('base64url')
-  const codeChallenge = crypto
-    .createHash('sha256')
-    .update(codeVerifier)
-    .digest('base64url')
+  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url')
   const state = crypto.randomBytes(16).toString('hex')
 
-  // Store verifier + state for the callback
-  await prisma.setting.upsert({ where: { key: 'x_oauth_code_verifier' }, create: { key: 'x_oauth_code_verifier', value: codeVerifier }, update: { value: codeVerifier } })
-  await prisma.setting.upsert({ where: { key: 'x_oauth_state' }, create: { key: 'x_oauth_state', value: state }, update: { value: state } })
-
-  // Store the origin so the callback can use it too
-  const origin = `${req.nextUrl.protocol}//${req.nextUrl.host}`
-  await prisma.setting.upsert({ where: { key: 'x_oauth_redirect_origin' }, create: { key: 'x_oauth_redirect_origin', value: origin }, update: { value: origin } })
+  const origin = getTrustedOrigin()
   const redirectUri = `${origin}/api/import/x-oauth/callback`
 
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: clientId.value,
+    client_id: resolvedClientId,
     redirect_uri: redirectUri,
     scope: 'bookmark.read tweet.read users.read offline.access',
     state,
@@ -39,5 +34,16 @@ export async function GET(req: NextRequest) {
     code_challenge_method: 'S256',
   })
 
-  return NextResponse.json({ authUrl: `https://x.com/i/oauth2/authorize?${params}` })
+  const cookieOpts = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/api/import/x-oauth/callback',
+    maxAge: 600, // 10分
+    secure: process.env.NODE_ENV === 'production',
+  }
+
+  const response = NextResponse.json({ authUrl: `https://x.com/i/oauth2/authorize?${params}` })
+  response.cookies.set('__pkce_v', codeVerifier, cookieOpts)
+  response.cookies.set('__pkce_s', state, cookieOpts)
+  return response
 }

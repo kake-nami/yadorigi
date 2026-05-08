@@ -9,18 +9,19 @@ export const actionsRouter = router({
 
   create: publicProcedure
     .input(z.object({
-      name: z.string().min(1),
-      description: z.string().optional(),
-      color: z.string().optional(),
+      name: z.string().min(1).max(100),
+      description: z.string().max(500).optional(),
+      // M-4: CSS注入防止のため HEX カラーコードのみ受け付ける
+      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
     }))
     .mutation(({ input }) => db.actionItem.create({ data: input })),
 
   update: publicProcedure
     .input(z.object({
       id: z.string(),
-      name: z.string().min(1).optional(),
-      description: z.string().optional(),
-      color: z.string().optional(),
+      name: z.string().min(1).max(100).optional(),
+      description: z.string().max(500).optional(),
+      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
     }))
     .mutation(({ input }) => {
       const { id, ...data } = input;

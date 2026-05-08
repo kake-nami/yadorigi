@@ -21,9 +21,11 @@ export async function GET(req: NextRequest) {
     .filter(w => w.length >= 3)
     .slice(0, 6);
 
-  const tags: string[] = bookmark.semanticTags
-    ? (JSON.parse(bookmark.semanticTags) as string[]).slice(0, 4)
-    : [];
+  // M-2: エンリッチ失敗時など不正 JSON が入り得るため try-catch で保護
+  let tags: string[] = []
+  try {
+    if (bookmark.semanticTags) tags = (JSON.parse(bookmark.semanticTags) as string[]).slice(0, 4)
+  } catch { /* ignore */ }
 
   const keywords = [...new Set([...words, ...tags])];
 

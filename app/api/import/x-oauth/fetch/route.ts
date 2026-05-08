@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { getXAccessToken, getXRefreshToken, storeXTokens } from '@/lib/db-crypto'
 import { logBehavior } from '@/lib/behavior-tracker'
 
 interface XTweet {
@@ -29,16 +30,16 @@ interface XBookmarksResponse {
   meta?: { next_token?: string; result_count?: number }
 }
 
+// C-1: トークンを keychain から取得し、期限切れなら refresh する
 async function getValidToken(): Promise<string | null> {
-  const accessToken = await prisma.setting.findUnique({ where: { key: 'x_oauth_access_token' } })
+  const accessToken = await getXAccessToken()
   const tokenExpiry = await prisma.setting.findUnique({ where: { key: 'x_oauth_token_expiry' } })
 
-  if (!accessToken?.value) return null
+  if (!accessToken) return null
 
-  // Check if token is expired and try to refresh
   if (tokenExpiry?.value && Date.now() > Number(tokenExpiry.value)) {
-    const refreshToken = await prisma.setting.findUnique({ where: { key: 'x_oauth_refresh_token' } })
-    if (!refreshToken?.value) return null
+    const refreshToken = await getXRefreshToken()
+    if (!refreshToken) return null
 
     const clientIdSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })
     const clientSecretSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_secret' } })
@@ -48,23 +49,16 @@ async function getValidToken(): Promise<string | null> {
 
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
-      refresh_token: refreshToken.value,
+      refresh_token: refreshToken,
       client_id: resolvedClientId,
     })
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    }
+    const headers: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' }
     if (resolvedClientSecret) {
       headers['Authorization'] = `Basic ${Buffer.from(`${resolvedClientId}:${resolvedClientSecret}`).toString('base64')}`
     }
 
-    const res = await fetch('https://api.x.com/2/oauth2/token', {
-      method: 'POST',
-      headers,
-      body,
-    })
-
+    const res = await fetch('https://api.x.com/2/oauth2/token', { method: 'POST', headers, body })
     if (!res.ok) return null
 
     const tokens = await res.json() as {
@@ -73,17 +67,18 @@ async function getValidToken(): Promise<string | null> {
       expires_in: number
     }
 
+    await storeXTokens(tokens.access_token, tokens.refresh_token)
     const expiry = String(Date.now() + tokens.expires_in * 1000)
-    await prisma.setting.upsert({ where: { key: 'x_oauth_access_token' }, create: { key: 'x_oauth_access_token', value: tokens.access_token }, update: { value: tokens.access_token } })
-    await prisma.setting.upsert({ where: { key: 'x_oauth_token_expiry' }, create: { key: 'x_oauth_token_expiry', value: expiry }, update: { value: expiry } })
-    if (tokens.refresh_token) {
-      await prisma.setting.upsert({ where: { key: 'x_oauth_refresh_token' }, create: { key: 'x_oauth_refresh_token', value: tokens.refresh_token }, update: { value: tokens.refresh_token } })
-    }
+    await prisma.setting.upsert({
+      where: { key: 'x_oauth_token_expiry' },
+      create: { key: 'x_oauth_token_expiry', value: expiry },
+      update: { value: expiry },
+    })
 
     return tokens.access_token
   }
 
-  return accessToken.value
+  return accessToken
 }
 
 export async function POST(req: NextRequest) {
@@ -115,8 +110,8 @@ export async function POST(req: NextRequest) {
     })
 
     if (!res.ok) {
-      const errText = await res.text()
-      console.error('X API bookmarks error:', res.status, errText)
+      // L-1: ステータスコードのみログ（レスポンスボディは記録しない）
+      console.error('X API bookmarks error: HTTP', res.status)
       if (total === 0) {
         return NextResponse.json({ error: `X API error: ${res.status}` }, { status: 502 })
       }
@@ -154,15 +149,12 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Import media
       const mediaKeys = tweet.attachments?.media_keys ?? []
-      const mediaItems = mediaKeys
-        .map((key) => mediaMap.get(key))
-        .filter((m): m is XMedia => !!m)
+      const mediaItems = mediaKeys.map(key => mediaMap.get(key)).filter((m): m is XMedia => !!m)
 
       if (mediaItems.length > 0) {
         await prisma.mediaItem.createMany({
-          data: mediaItems.map((m) => ({
+          data: mediaItems.map(m => ({
             bookmarkId: created.id,
             type: m.type === 'animated_gif' ? 'gif' : m.type,
             url: m.url ?? m.preview_image_url ?? '',
@@ -178,7 +170,6 @@ export async function POST(req: NextRequest) {
     if (!nextToken) break
   }
 
-  // 実データが入ったのでデモカードを削除し、行動ログを記録
   if (imported > 0) {
     await prisma.bookmark.deleteMany({ where: { source: 'demo' } })
     await logBehavior('bookmark_create')

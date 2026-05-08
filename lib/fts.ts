@@ -73,10 +73,14 @@ export async function ftsSearch(keywords: string[]): Promise<string[]> {
   try {
     await ensureFtsTable()
 
-    // Sanitize each keyword: remove FTS5 special chars, wrap in quotes for phrase safety
+    // M-1: FTS5演算子（AND/OR/NOT）と特殊文字を除去してインジェクションを防ぐ
     const terms = keywords
-      .map((kw) => kw.replace(/["*()]/g, ' ').trim())
-      .filter((kw) => kw.length >= 2)
+      .map(kw => kw
+        .replace(/["*(){}\^]/g, ' ')
+        .replace(/\b(AND|OR|NOT)\b/gi, ' ')
+        .trim()
+      )
+      .filter(kw => kw.length >= 2)
 
     if (terms.length === 0) return []
 

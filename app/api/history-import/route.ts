@@ -36,11 +36,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'urls required' }, { status: 400 });
   }
 
+  // M-3: 各要素が文字列であることを保証（数値やオブジェクトが混入しても安全）
+  const validUrls = urls.filter((u): u is string => typeof u === 'string').slice(0, 500)
+
   // 上限100件、重複排除
   const seen = new Set<string>();
   const toImport: { tweetId: string; handle: string; url: string }[] = [];
 
-  for (const raw of urls.slice(0, 500)) {
+  for (const raw of validUrls) {
     const url = raw.trim();
     const tweetId = extractTweetId(url);
     if (!tweetId || seen.has(tweetId)) continue;
