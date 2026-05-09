@@ -1,13 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import crypto from 'crypto'
+import { getTrustedOrigin } from '@/lib/x-oauth-config'
 
-// H-3: 信頼済みオリジンは環境変数で固定。動的ホスト検出は Open Redirect の素地になる。
-function getTrustedOrigin(): string {
-  return process.env.YADORIGI_BASE_URL?.trim().replace(/\/$/, '') ?? 'http://localhost:3000'
-}
-
-export async function GET(req: NextRequest) {
+export async function GET() {
   // 環境変数 → DB設定 の順でフォールバック
   const envClientId = process.env.X_OAUTH_CLIENT_ID?.trim()
   const clientIdSetting = await prisma.setting.findUnique({ where: { key: 'x_oauth_client_id' } })

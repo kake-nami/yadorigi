@@ -993,7 +993,10 @@ function DangerZoneSection({ onToast }: { onToast: (t: Toast) => void }) {
   async function handleClearAll() {
     setClearing(true)
     try {
-      const res = await fetch('/api/bookmarks', { method: 'DELETE' })
+      const res = await fetch('/api/bookmarks', {
+        method: 'DELETE',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      })
       if (!res.ok) {
         const data = await res.json() as { error?: string }
         throw new Error(data.error ?? 'Failed to clear')

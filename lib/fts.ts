@@ -73,18 +73,16 @@ export async function ftsSearch(keywords: string[]): Promise<string[]> {
   try {
     await ensureFtsTable()
 
-    // M-1: FTS5演算子（AND/OR/NOT）と特殊文字を除去してインジェクションを防ぐ
+    // L-F: 各キーワードをダブルクォートでフレーズ化することで FTS5 演算子・特殊文字を
+    // すべて文字列リテラルとして扱う。AND/OR/NOT/-/:/+/* などのサニタイズが不要になる。
+    // 内部のダブルクォートは "" にエスケープする（FTS5 のフレーズ内エスケープ規則）。
     const terms = keywords
-      .map(kw => kw
-        .replace(/["*(){}\^]/g, ' ')
-        .replace(/\b(AND|OR|NOT)\b/gi, ' ')
-        .trim()
-      )
       .filter(kw => kw.length >= 2)
+      .map(kw => `"${kw.replace(/"/g, '""')}"`)
 
     if (terms.length === 0) return []
 
-    // Build FTS5 MATCH query with OR between terms
+    // フレーズ間は OR で結合（演算子としての OR はクォート外なので有効）
     const matchQuery = terms.join(' OR ')
 
     const results = await prisma.$queryRaw<{ bookmark_id: string }[]>`

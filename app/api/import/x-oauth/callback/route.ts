@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import prisma from '@/lib/db'
 import { storeXTokens } from '@/lib/db-crypto'
-
-// H-3: 信頼済みオリジンは環境変数で固定
-function getTrustedOrigin(): string {
-  return process.env.YADORIGI_BASE_URL?.trim().replace(/\/$/, '') ?? 'http://localhost:3000'
-}
+import { getTrustedOrigin } from '@/lib/x-oauth-config'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
