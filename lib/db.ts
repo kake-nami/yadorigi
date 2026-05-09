@@ -7,19 +7,14 @@ const dbUrl = process.env.DATABASE_URL ?? `file:${path.join(process.cwd(), 'pris
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 
 function createPrismaClient(): PrismaClient {
-  const client = new PrismaClient({
+  // H-1: npm overrides により require('better-sqlite3') は
+  // lib/better-sqlite3-sqlcipher-keyed/index.cjs（SQLCipher ラッパー）に解決される。
+  // ラッパーが YADORIGI_ENCRYPTION_KEY を PRAGMA key で適用するため、
+  // ここでは通常通り URL ベースのアダプターを渡すだけでよい。
+  // YADORIGI_ENCRYPTION_KEY は scripts/start.mjs が OS keychain から読み取り注入する。
+  return new PrismaClient({
     adapter: new PrismaBetterSqlite3({ url: dbUrl }),
   })
-
-  // H-1: YADORIGI_ENCRYPTION_KEY は scripts/start.mjs が OS keychain から読み取り注入する。
-  // better-sqlite3-sqlcipher に置換済みの場合のみ有効。
-  // PrismaBetterSqlite3 アダプターが Database インスタンスを受け付けるよう
-  // better-sqlite3-sqlcipher へ移行したタイミングで以下のコメントを実装に切り替える:
-  //   const sqlite = new Database(dbPath)
-  //   if (process.env.YADORIGI_ENCRYPTION_KEY) sqlite.pragma(`key='${encKey}'`)
-  //   new PrismaClient({ adapter: new PrismaBetterSqlite3(sqlite) })
-
-  return client
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()

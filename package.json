@@ -34,7 +34,7 @@
     "@trpc/react-query": "^11.17.0",
     "@trpc/server": "^11.17.0",
     "@xyflow/react": "^12.10.1",
-    "better-sqlite3": "^12.6.2",
+    "better-sqlite3-multiple-ciphers": "^12.9.0",
     "class-variance-authority": "^0.7.1",
     "jszip": "^3.10.1",
     "keytar": "^7.9.0",
@@ -45,6 +45,9 @@
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.4.3"
+  },
+  "overrides": {
+    "better-sqlite3": "file:lib/better-sqlite3-sqlcipher-keyed"
   },
   "devDependencies": {
     "@prisma/client": "^7.4.2",

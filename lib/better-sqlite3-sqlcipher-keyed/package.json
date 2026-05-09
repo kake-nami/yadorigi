@@ -1,0 +1,7 @@
+{
+  "name": "better-sqlite3",
+  "version": "99.0.0",
+  "description": "better-sqlite3-multiple-ciphers wrapper that auto-applies YADORIGI_ENCRYPTION_KEY",
+  "main": "index.cjs",
+  "private": true
+}
