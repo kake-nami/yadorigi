@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import { logBehavior } from '@/lib/behavior-tracker';
 
 const DOMAIN_PATTERN = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\//;
 const STATUS_PATTERN = /\/(status|i\/web\/status)\/(\d+)/;
@@ -80,8 +81,10 @@ export async function POST(req: NextRequest) {
   // デモカードを削除（実データが入ったので）
   await prisma.bookmark.deleteMany({ where: { source: 'demo' } });
 
-  // 行動ログ
-  await prisma.behaviorLog.create({ data: { type: 'bookmark_create' } });
+  if (imported > 0) {
+    await logBehavior('bookmark_create');
+    await logBehavior('import_complete');
+  }
 
   return NextResponse.json({ imported, skipped });
 }

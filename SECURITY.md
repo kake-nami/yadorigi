@@ -1,30 +1,47 @@
-# Security Policy
+# セキュリティについて
 
-## Supported Versions
+## DBの暗号化とリカバリーキー
 
-| Version | Supported          |
-| ------- | ------------------ |
-| latest  | :white_check_mark: |
+Yadorigiは起動時にローカルDBをAES-256で暗号化します。
+暗号化キーはOSのキーチェーン（macOS Keychain / Windows Credential Manager）に保存されます。
 
-## Reporting a Vulnerability
+> **注意：** Docker環境ではOSキーチェーンが利用できないため、`YADORIGI_NO_ENCRYPTION=1` を設定してください。
 
-If you discover a security vulnerability in Siftly, please report it responsibly.
+### リカバリーキーの重要性
 
-**Do NOT open a public GitHub issue for security vulnerabilities.**
+初回起動時に生成されるリカバリーキーは、以下の場合にDBへのアクセスを回復するために必要です：
+- OSの再インストール
+- PCの交換・クラッシュ
+- keychainデータの破損
 
-Instead, please DM [@viperr](https://x.com/viperr) on X.
+**リカバリーキーを失った場合、DBの内容は復旧できません。**
 
-### What to include
+安全な場所（パスワードマネージャー、印刷して保管等）に保存してください。
 
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if any)
+### 定期バックアップの推奨
 
-### What to expect
+Settings > Backup からJSONエクスポートを定期的に行うことを推奨します。
+暗号化キーとは独立して、コンテンツのバックアップを保持できます。
 
-- Acknowledgment within **48 hours**
-- Status update within **7 days**
-- Credit in the release notes (unless you prefer to remain anonymous)
+---
 
-We take all security reports seriously and appreciate your help keeping Siftly safe for everyone.
+## 脆弱性の報告
+
+セキュリティ脆弱性を発見した場合、**GitHub Issueではなく**以下の方法で報告してください：
+
+GitHub の [Security Advisories](https://github.com/[あなたのGitHub]/yadorigi/security/advisories/new) を使用してください。
+
+報告内容に含めてください：
+- 脆弱性の説明
+- 再現手順
+- 影響範囲
+- 可能であれば修正案
+
+---
+
+## データのプライバシー
+
+- すべてのbookmarkデータはローカルのSQLite DBに保存されます
+- クラウドへの送信は行われません
+- AI機能（Vision分析）を有効にした場合のみ、tweet内容と画像がAnthropicのAPIに送信されます
+- X OAuth認証情報はローカルのSettingテーブルに保存されます

@@ -8,7 +8,8 @@ export type BehaviorEventType =
   | 'session_start'
   | 'bookmark_open'
   | 'bookmark_create'
-  | 'bookmark_delete';
+  | 'bookmark_delete'
+  | 'import_complete';
 
 export async function logBehavior(
   type: BehaviorEventType,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { logBehavior } from '@/lib/behavior-tracker'
 
 const ALLOWED_ORIGINS = new Set(['https://x.com', 'https://twitter.com'])
 
@@ -171,6 +172,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     imported++
+  }
+
+  if (imported > 0) {
+    await logBehavior('import_complete')
   }
 
   return NextResponse.json({ imported, skipped }, { headers: cors })

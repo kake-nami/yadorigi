@@ -127,6 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (importedCount > 0) {
     await logBehavior('bookmark_create')
+    await logBehavior('import_complete')
   }
 
   return NextResponse.json({

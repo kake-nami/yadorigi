@@ -129,7 +129,7 @@ model ImplicitCluster {
 
 model BehaviorLog {
   id         String   @id @default(cuid())
-  type       String   // "session_start" | "bookmark_open" | "bookmark_create" | "bookmark_delete"
+  type       String   // "session_start" | "bookmark_open" | "bookmark_create" | "bookmark_delete" | "import_complete"
   bookmarkId String?
   timestamp  DateTime @default(now())
 }

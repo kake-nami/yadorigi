@@ -40,7 +40,8 @@ export default function SetupPage() {
   }
 
   function handleDone() {
-    router.push('/');
+    // Cookie は /api/setup/init のレスポンスで HttpOnly としてセット済み
+    router.push('/kanban');
   }
 
   if (step === 'generate') {

@@ -173,6 +173,7 @@ export async function POST(req: NextRequest) {
   if (imported > 0) {
     await prisma.bookmark.deleteMany({ where: { source: 'demo' } })
     await logBehavior('bookmark_create')
+    await logBehavior('import_complete')
   }
 
   return NextResponse.json({ imported, skipped, total })

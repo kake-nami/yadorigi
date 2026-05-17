@@ -47,7 +47,7 @@ async function fetchImageAsBase64(
 const ANALYSIS_PROMPT = `Analyze this image for a bookmark search system. Return ONLY valid JSON, no markdown, no explanation.
 
 {
-  "people": ["description of each person visible — age, gender, appearance, expression, what they're doing"],
+  "people": [],
   "text_ocr": ["ALL visible text exactly as written — signs, captions, UI text, meme text, headlines, code"],
   "objects": ["significant objects, brands, logos, symbols, technology"],
   "scene": "brief scene description — setting and platform (e.g. 'Twitter screenshot', 'office desk', 'terminal window')",
@@ -58,14 +58,19 @@ const ANALYSIS_PROMPT = `Analyze this image for a bookmark search system. Return
   "tags": ["30-40 specific searchable tags — topics, synonyms, proper nouns, brands, actions, emotions"]
 }
 
-Rules:
+CRITICAL RULES — MUST FOLLOW:
+- NEVER tag, describe, or identify any people, faces, or individuals
+- NEVER generate tags like "person", "man", "woman", "face", "people", "crowd"
+- NEVER describe physical appearance of any individual
+- people field: ALWAYS return empty array []
+- Focus ONLY on: objects, scenes, text, colors, activities, topics, brands
 - text_ocr: transcribe ALL readable text exactly, word for word
 - If a financial chart: include asset name, direction (up/down), timeframe
 - If code: include language, key function/concept names
 - If a meme: include the exact template name
-- tags: be maximally specific — include brand names, person names, tool names, technical terms
-- BAD tags: "twitter", "post", "image", "screenshot" (too generic)
-- GOOD tags: "bitcoin price chart", "react hooks", "frustrated man", "gpt-4", "bull market"`
+- tags: be maximally specific — include brand names, tool names, technical terms
+- BAD tags: "twitter", "post", "image", "screenshot", "person", "face" (too generic or privacy-risk)
+- GOOD tags: "bitcoin price chart", "react hooks", "gpt-4", "bull market"`
 
 const RETRY_DELAYS_MS = [1500, 4000, 10000]
 const CONCURRENCY = 12
@@ -87,7 +92,11 @@ async function analyzeImageViaCli(imageUrl: string): Promise<string> {
     if (!result.success || !result.data) return ''
     const jsonMatch = result.data.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return ''
-    try { JSON.parse(jsonMatch[0]); return jsonMatch[0] } catch { return '' }
+    try {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (typeof parsed === 'object' && parsed !== null) parsed.people = []
+      return JSON.stringify(parsed)
+    } catch { return '' }
   } else {
     if (!(await getCliAvailability())) return ''
     const model = await getActiveModel()
@@ -96,7 +105,11 @@ async function analyzeImageViaCli(imageUrl: string): Promise<string> {
     if (!result.success || !result.data) return ''
     const jsonMatch = result.data.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return ''
-    try { JSON.parse(jsonMatch[0]); return jsonMatch[0] } catch { return '' }
+    try {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (typeof parsed === 'object' && parsed !== null) parsed.people = []
+      return JSON.stringify(parsed)
+    } catch { return '' }
   }
 }
 
@@ -131,11 +144,12 @@ async function analyzeImageWithRetry(
     const raw = response.text?.trim() ?? ''
     if (!raw) return ''
 
-    // Validate it's parseable JSON
+    // Validate it's parseable JSON, then strip people field (プロンプトインジェクション対策)
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return ''
-    JSON.parse(jsonMatch[0]) // throws if invalid
-    return jsonMatch[0]
+    const parsed = JSON.parse(jsonMatch[0]) // throws if invalid
+    if (typeof parsed === 'object' && parsed !== null) parsed.people = []
+    return JSON.stringify(parsed)
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
     // Never retry client errors (4xx) — bad request, invalid image, too large, etc.

@@ -1,52 +1,109 @@
-# Contributing to Siftly
+# Contributing to Yadorigi
 
-Thank you for your interest in contributing! Here's how to get started.
+Yadorigi への貢献を歓迎します。ただし、このプロダクトには**設計哲学コード**があります。
+PRを送る前に必ずこのドキュメントを読んでください。
 
-## Development Setup
+---
 
-1. Fork and clone the repo
-2. Install dependencies: `npm install`
-3. Set up the database:
-   - `npx prisma generate`
-   - `npx prisma migrate dev --name init`
-4. Copy the env example: `cp .env.example .env.local`
-5. Add your Anthropic API key to `.env.local`
-6. Run the dev server: `npm run dev`
+## 設計哲学（最重要）
 
-## Project Structure
+### メタ原則
 
-- `app/` — Next.js pages and API routes
-- `lib/` — Core logic (AI pipeline, database helpers)
-- `components/` — Reusable UI components
-- `prisma/` — Database schema
+> **「考えさせないことが、最大のリスペクトである」**
 
-## Making Changes
+- 同意フローは1クリックで完結する
+- クラスタリングはユーザーに説明せず、そこにあるように見せる
+- 計測はUIに出さず、裏でやる
+- 暗号化はユーザーに意識させない（ただしリカバリーは明示する）
 
-- **AI prompts**: Edit in `lib/categorizer.ts` and `lib/vision-analyzer.ts`
-- **Categories**: Add to `DEFAULT_CATEGORIES` in `lib/categorizer.ts`
-- **Tool detection**: Add domains to `KNOWN_TOOL_DOMAINS` in `lib/rawjson-extractor.ts`
-- **UI**: Components are in `components/`, pages in `app/`
+### 規範性
 
-## Pull Request Guidelines
+> 「保存することは、未来の自分との約束である」
 
-- Keep PRs focused — one feature or fix per PR
-- Include a clear description of what changed and why
-- Test that the AI pipeline still runs end-to-end
-- Run `npx tsc --noEmit` before submitting to catch type errors
+Yadorigiは「整理ツール」ではなく「約束を育てるツール」です。
+ユーザーが何もしなくても価値が漏れ出す設計を目指しています。
 
-## Good First Contributions
+---
 
-- Add entries to `KNOWN_TOOL_DOMAINS` in `lib/rawjson-extractor.ts`
-- Add new default categories with descriptions in `lib/categorizer.ts`
-- Improve AI prompts for better accuracy
-- Add new export formats
-- Improve the mindmap visualization
-- Add keyboard shortcuts
+## PR を送る前のチェックリスト
 
-## Reporting Issues
+### ✅ 許容されるPR
 
-Please open a GitHub issue with:
-- Steps to reproduce
-- Expected vs actual behavior
-- Your OS and Node.js version
-- Any relevant error messages from the browser console or terminal
+- バグ修正
+- パフォーマンス改善
+- テストの追加
+- 日本語ドキュメントの改善
+- アクセシビリティの改善
+- Mindmapや検索の機能強化
+- クラスタリング精度の向上
+
+### ❌ reject されるPR
+
+以下を含むPRは哲学コード違反として reject します：
+
+**ゲーミフィケーション系**
+- ストリーク（連続使用日数）の追加
+- バッジ・実績解除の追加
+- ポイント・レベル・ランキングの追加
+- 「N件整理しました！🎉」のような祝福UI
+
+**焦り・煽り系**
+- 未読件数の赤バッジ強調
+- 「あとN件で達成！」のような目標煽り
+- カウントダウンタイマー
+
+**AI過信系**
+- AIによる全自動分類（承認/却下UIを省略する実装）
+- AI処理中の擬人化アニメーション
+- 「AIが学習中」の可視化
+
+**プライバシー違反系**
+- 行動シグナルのUI表示
+- Vision分析でのperson tag生成
+- DB暗号化のデフォルト無効化（環境変数以外での）
+
+**デザイン系**
+- グラデーションの追加
+- 装飾目的のシャドウ
+- 200msを超えるアニメーション
+- Web Fontの追加
+- CSS変数を使わないHEXの直書き
+
+---
+
+## コードスタイル
+
+- TypeScript strict mode
+- Prismaのマイグレーションは必ず `npx prisma migrate dev --name <説明的な名前>`
+- コンポーネントはデザイントークン（CSS variables）経由でのみ色を指定
+- UIコピーはすべて i18n strings ファイル経由
+
+---
+
+## demo データについて
+
+**実際のXユーザーのツイートURLをテストデータに使わないでください。**
+
+demo カードや fixture データは必ず架空のURLを使用してください：
+```
+https://x.com/demo_user/status/0000000000000000001
+```
+
+---
+
+## Issue の報告
+
+バグ報告は歓迎します。以下を含めてください：
+- OS / Node.js バージョン
+- エラーメッセージ（あれば）
+- 再現手順
+
+セキュリティ脆弱性は Issue ではなく [SECURITY.md](./SECURITY.md) の手順で報告してください。
+
+---
+
+## 言語について
+
+- Issue / Discussion / PR description は **日本語を推奨**します
+- 英語でのコントリビューションも歓迎しますが、設計哲学の議論は日本語で行います
+- コードのコメントは英語・日本語どちらでも構いません

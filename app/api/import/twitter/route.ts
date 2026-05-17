@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { logBehavior } from '@/lib/behavior-tracker'
 
 const BEARER = 'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I%2BxMb1nYFAA%3DUognEfK4ZPxYowpr4nMskopkC%2FDO'
 
@@ -327,6 +328,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Opt-in: trigger categorization in background after a successful import.
   // Enable by setting AUTO_CATEGORIZE_AFTER_IMPORT=true in the environment.
+  if (imported > 0) {
+    await logBehavior('import_complete')
+  }
+
   if (imported > 0 && process.env.AUTO_CATEGORIZE_AFTER_IMPORT === 'true') {
     const origin = request.nextUrl.origin
     void fetch(`${origin}/api/categorize`, {
