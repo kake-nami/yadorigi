@@ -13,8 +13,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Siftly',
-  description: 'Your Twitter bookmarks, organized and searchable.',
+  title: 'Yadorigi',
+  description: 'X ブックマークをAIで整理するローカルOSSツール',
 }
 
 export default function RootLayout({

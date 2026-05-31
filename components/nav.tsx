@@ -119,8 +119,8 @@ export default function Nav() {
       setCategories([])
       setTotalBookmarks(0)
     }
-    window.addEventListener('siftly:cleared', handleCleared)
-    return () => window.removeEventListener('siftly:cleared', handleCleared)
+    window.addEventListener('yadorigi:cleared', handleCleared)
+    return () => window.removeEventListener('yadorigi:cleared', handleCleared)
   }, [])
 
   useEffect(() => {

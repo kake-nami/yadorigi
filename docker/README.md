@@ -1,4 +1,4 @@
-# Siftly — Docker
+# Yadorigi — Docker
 
 ## Prerequisites
 

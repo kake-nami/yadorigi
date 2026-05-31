@@ -138,7 +138,7 @@ const BOOKMARKLET_SCRIPT = `(async function(){
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');a.href=url;a.download=source+'s.json';a.click();
     setTimeout(function(){URL.revokeObjectURL(url);},1000);
-    showToast('\u2705 Downloaded '+all.length+' '+label+'! Upload to Siftly.','#14532d');
+    showToast('\u2705 Downloaded '+all.length+' '+label+'! Upload to Yadorigi.','#14532d');
   }
   btn.onclick=doExport;
   autoBtn.textContent='\u25b6 Auto-scroll';
@@ -828,7 +828,7 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
           {status.tokenExpired && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/8 border border-amber-500/20">
               <AlertCircle size={14} className="text-amber-400 shrink-0" />
-              <p className="text-xs text-amber-300">Token expired. Siftly will try to auto-refresh, or you can reconnect.</p>
+              <p className="text-xs text-amber-300">Token expired. Yadorigi will try to auto-refresh, or you can reconnect.</p>
             </div>
           )}
 

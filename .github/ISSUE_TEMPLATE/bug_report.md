@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve Siftly
+about: Report a bug to help us improve Yadorigi
 title: "[Bug] "
 labels: bug
 assignees: ""
@@ -24,7 +24,7 @@ If applicable, add screenshots to help explain your problem.
 - OS: [e.g. macOS, Windows, Linux]
 - Browser: [e.g. Chrome, Firefox]
 - Node version: [e.g. 20.x]
-- Siftly version/commit: [e.g. latest main]
+- Yadorigi version/commit: [e.g. latest main]
 
 ## Additional context
 Any other context about the problem.

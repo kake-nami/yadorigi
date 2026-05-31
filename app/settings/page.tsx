@@ -479,7 +479,7 @@ function CodexCliStatusBox() {
             {isChatGPT ? (
               <>Signed in as <span className="text-zinc-300">{tier}</span> via ChatGPT. AI features will use Codex CLI to proxy requests. An API key below will take priority if set.</>
             ) : (
-              <>Signed in as <span className="text-zinc-300">{tier}</span> via Codex CLI. Siftly will use your credentials automatically. An API key below will take priority if set.</>
+              <>Signed in as <span className="text-zinc-300">{tier}</span> via Codex CLI. Yadorigi will use your credentials automatically. An API key below will take priority if set.</>
             )}
           </p>
         </div>
@@ -1011,7 +1011,7 @@ function DangerZoneSection({ onToast }: { onToast: (t: Toast) => void }) {
       setConfirming(false)
       setCleared(true)
       setTimeout(() => setCleared(false), 3000)
-      window.dispatchEvent(new CustomEvent('siftly:cleared'))
+      window.dispatchEvent(new CustomEvent('yadorigi:cleared'))
     } catch (err) {
       onToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to clear bookmarks' })
     } finally {
@@ -1093,7 +1093,7 @@ function AboutSection() {
   return (
     <Section icon={Info} title={t('settings.about.title')} description={t('settings.about.description')}>
       <p className="text-sm text-zinc-400 leading-relaxed mb-5">
-        <strong className="text-zinc-100 font-semibold">Siftly</strong> is a self-hosted app for
+        <strong className="text-zinc-100 font-semibold">Yadorigi</strong> is a self-hosted app for
         organizing your Twitter/X bookmarks. Use the built-in bookmarklet or console script to import,
         then run the 4-stage AI pipeline to analyze images, extract entities, generate semantic tags, and
         auto-categorize — then explore connections through the interactive mindmap.

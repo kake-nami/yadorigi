@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for Siftly
+about: Suggest an idea for Yadorigi
 title: "[Feature] "
 labels: enhancement
 assignees: ""
