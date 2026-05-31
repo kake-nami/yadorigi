@@ -1,18 +1,18 @@
 {
-  "name": "siftly",
-  "version": "0.2.0",
-  "description": "Self-hosted Twitter/X bookmark manager with AI-powered categorization",
+  "name": "yadorigi",
+  "version": "0.1.0",
+  "description": "ローカルファースト X ブックマーク管理ツール（Self-hosted X bookmark manager with AI）",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/viperrcrypto/Siftly.git"
+    "url": "https://github.com/kake-nami/yadorigi.git"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/start.mjs dev",
     "build": "next build",
-    "start": "next start",
-    "dev:secure": "node scripts/start.mjs dev",
-    "start:secure": "node scripts/start.mjs",
+    "start": "node scripts/start.mjs",
+    "dev:next": "next dev",
+    "start:next": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "siftly": "tsx cli/siftly.ts"
@@ -44,6 +44,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.5.0",
+    "zenn-cli": "^0.4.8",
     "zod": "^4.4.3"
   },
   "overrides": {
