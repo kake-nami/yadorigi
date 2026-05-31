@@ -7,6 +7,7 @@ import { ExternalLink } from 'lucide-react';
 import type { BookmarkWithMedia, ActionLink } from '@/lib/types';
 import { ActionBadge } from '../action-link/action-badge';
 import { ActionLinkModal } from '../action-link/action-link-modal';
+import { useLocale } from '@/lib/locale-context';
 import { trpc } from '@/lib/trpc-client';
 
 interface Props {
@@ -14,8 +15,10 @@ interface Props {
 }
 
 export function KanbanCard({ bookmark }: Props) {
+  const { t } = useLocale();
   const [actionLinks, setActionLinks] = useState<ActionLink[]>(bookmark.actionLinks ?? []);
   const [modalOpen, setModalOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: bookmark.id,
@@ -32,7 +35,13 @@ export function KanbanCard({ bookmark }: Props) {
     trpc.bookmarks.markAsOpened.mutate({ id: bookmark.id }).catch(() => {});
   }
 
-  const tweetUrl = `https://x.com/${bookmark.authorHandle}/status/${bookmark.tweetId}`;
+  const isUnknownHandle = !bookmark.authorHandle || bookmark.authorHandle === 'unknown'
+  const tweetUrl = isUnknownHandle
+    ? `https://x.com/i/web/status/${bookmark.tweetId}`
+    : `https://x.com/${bookmark.authorHandle}/status/${bookmark.tweetId}`
+  const displayAuthor = isUnknownHandle
+    ? (bookmark.authorName && bookmark.authorName !== 'Unknown' ? bookmark.authorName : '—')
+    : `@${bookmark.authorHandle}`
   const displayText = bookmark.text.replace(/https?:\/\/t\.co\/\S+/g, '').trim();
 
   return (
@@ -51,7 +60,7 @@ export function KanbanCard({ bookmark }: Props) {
         {/* Author */}
         <div className="flex items-center justify-between gap-2">
           <span className="text-[12px] font-medium truncate" style={{ color: 'var(--color-text-secondary)' }}>
-            @{bookmark.authorHandle}
+            {displayAuthor}
           </span>
           <a
             href={tweetUrl}
@@ -68,9 +77,25 @@ export function KanbanCard({ bookmark }: Props) {
         </div>
 
         {/* Text */}
-        <p className="text-[13px] leading-relaxed line-clamp-3" style={{ color: 'var(--color-text-primary)' }}>
-          {displayText}
-        </p>
+        <div>
+          <p
+            className={`text-[13px] leading-relaxed ${expanded ? '' : 'line-clamp-3'}`}
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {displayText}
+          </p>
+          {displayText.length > 120 && (
+            <button
+              onClick={e => { e.stopPropagation(); setExpanded(v => !v); }}
+              className="text-[11px] mt-0.5 transition-colors"
+              style={{ color: 'var(--color-text-secondary)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
+            >
+              {expanded ? t('kanban.showLess') : t('kanban.showMore')}
+            </button>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="flex items-center gap-2 flex-wrap pt-0.5">
@@ -84,11 +109,10 @@ export function KanbanCard({ bookmark }: Props) {
               onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text-primary)')}
               onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
             >
-              + 行動予定
+              {t('kanban.addAction')}
             </button>
           )}
 
-          {/* 暗黙クラスタラベル: UIには小さく、控えめに表示するだけ */}
           {bookmark.implicitClusterId && bookmark.clusterSize && bookmark.clusterSize > 1 && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full"
@@ -97,7 +121,7 @@ export function KanbanCard({ bookmark }: Props) {
                 border: '1px solid var(--color-border)',
               }}
             >
-              他に{bookmark.clusterSize - 1}件
+              {t('kanban.clusterOther', { n: bookmark.clusterSize - 1 })}
             </span>
           )}
         </div>

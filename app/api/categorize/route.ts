@@ -33,6 +33,7 @@ interface CategorizationState {
   }
   lastError: string | null
   error: string | null
+  rateLimitHit: boolean
 }
 
 // In-memory state for progress tracking across requests
@@ -50,6 +51,7 @@ if (!globalState.categorizationState) {
     stageCounts: { visionTagged: 0, entitiesExtracted: 0, enriched: 0, categorized: 0 },
     lastError: null,
     error: null,
+    rateLimitHit: false,
   }
 }
 if (globalState.categorizationAbort === undefined) {
@@ -68,6 +70,25 @@ function setState(update: Partial<CategorizationState>): void {
   globalState.categorizationState = { ...globalState.categorizationState, ...update }
 }
 
+function isRateLimitError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  const msg = err.message.toLowerCase()
+  return (
+    msg.includes('429') ||
+    msg.includes('rate_limit') ||
+    msg.includes('rate limit') ||
+    msg.includes('quota') ||
+    msg.includes('would exceed') ||
+    msg.includes('too many requests')
+  )
+}
+
+function handleRateLimit(err: unknown): void {
+  const message = err instanceof Error ? err.message.slice(0, 200) : String(err)
+  setState({ rateLimitHit: true, lastError: `レート制限に達しました: ${message}` })
+  globalState.categorizationAbort = true
+}
+
 export async function GET(): Promise<NextResponse> {
   const state = getState()
   return NextResponse.json({
@@ -78,6 +99,7 @@ export async function GET(): Promise<NextResponse> {
     stageCounts: state.stageCounts,
     lastError: state.lastError,
     error: state.error,
+    rateLimitHit: state.rateLimitHit,
   })
 }
 
@@ -142,6 +164,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     stageCounts: { visionTagged: 0, entitiesExtracted: 0, enriched: 0, categorized: 0 },
     lastError: null,
     error: null,
+    rateLimitHit: false,
   })
 
   const provider = await getProvider()
@@ -243,6 +266,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                   counts.categorized += ids.length
                   setState({ stageCounts: { ...counts } })
                 } catch (catErr) {
+                  if (isRateLimitError(catErr)) {
+                    handleRateLimit(catErr)
+                    break
+                  }
                   console.error('[parallel] categorize batch error:', catErr)
                 }
               }
@@ -286,6 +313,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 counts.visionTagged++
                 setState({ stageCounts: { ...counts } })
               } catch (err) {
+                if (isRateLimitError(err)) {
+                  handleRateLimit(err)
+                  return
+                }
                 console.warn('[parallel] vision failed for', media.id, err instanceof Error ? err.message : err)
               }
             }
@@ -338,6 +369,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                     setState({ stageCounts: { ...counts } })
                   }
                 } catch (err) {
+                  if (isRateLimitError(err)) {
+                    handleRateLimit(err)
+                    return
+                  }
                   console.warn('[parallel] enrichment failed for', bm.id, err instanceof Error ? err.message : err)
                 }
               }

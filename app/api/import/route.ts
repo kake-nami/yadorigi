@@ -79,10 +79,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       const existing = await prisma.bookmark.findUnique({
         where: { tweetId: bookmark.tweetId },
-        select: { id: true },
+        select: { id: true, authorHandle: true, authorName: true },
       })
 
       if (existing) {
+        // If the new data has real author info and the stored data doesn't, patch it
+        const hasRealHandle = bookmark.authorHandle && bookmark.authorHandle !== 'unknown'
+        const storedIsUnknown = !existing.authorHandle || existing.authorHandle === 'unknown'
+        if (hasRealHandle && storedIsUnknown) {
+          await prisma.bookmark.update({
+            where: { id: existing.id },
+            data: {
+              authorHandle: bookmark.authorHandle,
+              authorName: bookmark.authorName,
+            },
+          })
+        }
         skippedCount++
         continue
       }

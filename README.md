@@ -132,3 +132,10 @@ docker-compose up
 ## License
 
 MIT
+
+This project is based on [Siftly](https://github.com/viperrcrypto/Siftly) by [@viperrcrypto](https://github.com/viperrcrypto), which is also released under the MIT License.
+
+```
+Copyright (c) Siftly contributors
+Copyright (c) 2025 Yadorigi contributors
+```

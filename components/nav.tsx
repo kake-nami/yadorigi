@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import ThemeToggle from './theme-toggle'
+import { useLocale } from '@/lib/locale-context'
+import type { Locale } from '@/lib/i18n'
 import {
   LayoutDashboard,
   Upload,
@@ -19,66 +21,11 @@ import {
   Zap,
 } from 'lucide-react'
 
-interface NavItem {
-  href: string
-  label: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/kanban', label: 'Kanban', icon: Kanban },
-  { href: '/ai-search', label: 'AI Search', icon: Sparkles },
-  { href: '/bookmarks', label: 'Browse', icon: Search },
-  { href: '/mindmap', label: 'Mindmap', icon: GitBranch },
-  { href: '/actions', label: 'Actions', icon: Zap },
-  { href: '/import', label: 'Import', icon: Upload },
-  { href: '/settings', label: 'Settings', icon: Settings },
-]
-
-const BUILDER_X = 'https://x.com/viperr'
-
-function SponsorFooter() {
-  return (
-    <div className="mx-3 mt-auto mb-3 pt-3 border-t border-zinc-800/50 space-y-2">
-      {/* Builder credit */}
-      <a
-        href={BUILDER_X}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-all"
-      >
-        <span className="text-[13px]">&#x1D54F;</span>
-        <span className="text-[11px] font-medium">Built by @viperr</span>
-      </a>
-
-      {/* Sponsor spot */}
-      <a
-        href={BUILDER_X}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-zinc-800/40 border border-zinc-700/30 hover:border-zinc-600/50 hover:bg-zinc-800/60 transition-all group"
-      >
-        <div className="w-7 h-7 rounded-full bg-zinc-700/50 border border-zinc-600/30 shrink-0" />
-        <div className="flex flex-col min-w-0">
-          <span className="text-[11px] font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors leading-tight">Support Siftly by sponsoring your logo here</span>
-          <span className="text-[10px] text-zinc-600 leading-tight mt-1">DM @viperr on X</span>
-        </div>
-      </a>
-    </div>
-  )
-}
-
 interface CategoryItem {
   name: string
   slug: string
   color: string
   bookmarkCount: number
-}
-
-function isActive(pathname: string, href: string): boolean {
-  if (href === '/') return pathname === '/'
-  return pathname.startsWith(href)
 }
 
 interface PipelineStatus {
@@ -88,16 +35,45 @@ interface PipelineStatus {
   total: number
 }
 
-const PIPELINE_STAGE_LABELS: Record<string, string> = {
-  vision: 'Analyzing images',
-  entities: 'Extracting entities',
-  enrichment: 'Generating tags',
-  categorize: 'Categorizing',
-  parallel: 'Processing in parallel',
+function isActive(pathname: string, href: string): boolean {
+  if (href === '/') return pathname === '/'
+  return pathname.startsWith(href)
+}
+
+function LocaleToggle() {
+  const { locale, setLocale } = useLocale()
+  const next: Locale = locale === 'ja' ? 'en' : 'ja'
+  return (
+    <button
+      onClick={() => setLocale(next)}
+      className="text-[11px] font-bold px-1.5 py-0.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
+      title={locale === 'ja' ? 'Switch to English' : '日本語に切り替え'}
+    >
+      {locale === 'ja' ? 'EN' : 'JA'}
+    </button>
+  )
+}
+
+function SponsorFooter() {
+  const BUILDER_X = 'https://x.com/viperr'
+  return (
+    <div className="mx-3 mt-auto mb-3 pt-3 border-t border-zinc-800/50 space-y-2">
+      <a
+        href={BUILDER_X}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-all"
+      >
+        <span className="text-[13px]">&#x1D54F;</span>
+        <span className="text-[11px] font-medium">Based on Siftly by @viperr</span>
+      </a>
+    </div>
+  )
 }
 
 export default function Nav() {
   const pathname = usePathname()
+  const { t } = useLocale()
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [totalBookmarks, setTotalBookmarks] = useState<number | null>(null)
   const [showAllCats, setShowAllCats] = useState(true)
@@ -106,6 +82,25 @@ export default function Nav() {
     return localStorage.getItem('nav-collections-open') !== 'false'
   })
   const [pipeline, setPipeline] = useState<PipelineStatus | null>(null)
+
+  const NAV_ITEMS = [
+    { href: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { href: '/kanban', label: t('nav.kanban'), icon: Kanban },
+    { href: '/ai-search', label: t('nav.aiSearch'), icon: Sparkles },
+    { href: '/bookmarks', label: t('nav.browse'), icon: Search },
+    { href: '/mindmap', label: t('nav.mindmap'), icon: GitBranch },
+    { href: '/actions', label: t('nav.actions'), icon: Zap },
+    { href: '/import', label: t('nav.import'), icon: Upload },
+    { href: '/settings', label: t('nav.settings'), icon: Settings },
+  ]
+
+  const PIPELINE_STAGE_LABELS: Record<string, string> = {
+    vision: t('nav.pipeline.vision'),
+    entities: t('nav.pipeline.entities'),
+    enrichment: t('nav.pipeline.enrichment'),
+    categorize: t('nav.pipeline.categorize'),
+    parallel: t('nav.pipeline.parallel'),
+  }
 
   function toggleCollections() {
     setCollectionsOpen((v) => {
@@ -129,7 +124,6 @@ export default function Nav() {
   }, [])
 
   useEffect(() => {
-    // Fetch stats
     fetch('/api/stats')
       .then((r) => r.json())
       .then((d: { totalBookmarks?: number }) => {
@@ -137,13 +131,11 @@ export default function Nav() {
       })
       .catch(() => {})
 
-    // Fetch categories with counts
     fetch('/api/categories')
       .then((r) => r.json())
       .then((d: { categories: CategoryItem[] }) => setCategories(d.categories ?? []))
       .catch(() => {})
 
-    // Poll pipeline status every 3s to show global indicator
     function pollPipeline() {
       fetch('/api/categorize')
         .then((r) => r.json())
@@ -156,22 +148,24 @@ export default function Nav() {
   }, [])
 
   const visibleCats = showAllCats ? categories : categories.slice(0, 8)
+  void totalBookmarks
 
   return (
     <aside className="flex flex-col bg-zinc-900 border-r border-zinc-800/50 shrink-0 sticky top-0 h-screen overflow-y-auto" style={{ width: '228px' }}>
 
       {/* Brand */}
-      <div className="flex items-center justify-center gap-3 px-4 py-3.5 border-b border-zinc-800/50">
-        <img src="/logo.svg" alt="Siftly" className="w-9 h-9 shrink-0" />
-        <span className="text-zinc-100 font-bold text-[17px] tracking-tight">
-          Sift<span style={{ color: '#F5A623' }}>ly</span>
+      <div className="flex items-center justify-center gap-2 px-4 py-3.5 border-b border-zinc-800/50">
+        <img src="/logo.svg" alt="Yadorigi" className="w-8 h-8 shrink-0" />
+        <span className="text-zinc-100 font-bold text-[16px] tracking-tight flex-1">
+          宿り<span style={{ color: '#F5A623' }}>木</span>
         </span>
-        <div className="shrink-0 flex items-center">
+        <div className="shrink-0 flex items-center gap-1">
+          <LocaleToggle />
           <ThemeToggle />
         </div>
       </div>
 
-      {/* Pipeline running indicator — hidden on /categorize and /import */}
+      {/* Pipeline running indicator */}
       {pipeline && (pipeline.status === 'running' || pipeline.status === 'stopping') &&
        pathname !== '/categorize' && pathname !== '/import' && (
         <Link
@@ -183,7 +177,7 @@ export default function Nav() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
           </span>
           <span className="text-[11px] font-medium text-indigo-300 truncate">
-            {pipeline.stage ? (PIPELINE_STAGE_LABELS[pipeline.stage] ?? pipeline.stage) : 'AI pipeline'}
+            {pipeline.stage ? (PIPELINE_STAGE_LABELS[pipeline.stage] ?? pipeline.stage) : t('nav.pipeline.ai')}
             {pipeline.stage === 'categorize' && pipeline.total > 0
               ? ` ${pipeline.done}/${pipeline.total}`
               : '…'}
@@ -191,14 +185,14 @@ export default function Nav() {
         </Link>
       )}
 
-      {/* Ctrl+K search trigger */}
+      {/* Search trigger */}
       <div className="px-3 pt-3 pb-1">
         <button
           onClick={openSearch}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/50 border border-zinc-700/40 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600/60 transition-all text-xs"
         >
           <Search size={12} className="shrink-0" />
-          <span className="flex-1 text-left">Search…</span>
+          <span className="flex-1 text-left">{t('nav.search')}</span>
           <kbd className="flex items-center gap-0.5 text-[10px] text-zinc-600 font-mono">
             <Command size={9} />K
           </kbd>
@@ -226,7 +220,6 @@ export default function Nav() {
         })}
       </nav>
 
-      {/* Divider */}
       <div className="mx-3 border-t border-zinc-800/50" />
 
       {/* Categories section */}
@@ -237,14 +230,14 @@ export default function Nav() {
             className="flex items-center justify-between px-2 mb-2 w-full group"
           >
             <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-semibold">
-              Collections
+              {t('nav.collections')}
             </p>
             <div className="flex items-center gap-1.5">
               <Link
                 href="/categories"
                 onClick={(e) => e.stopPropagation()}
                 className="text-zinc-700 hover:text-zinc-400 transition-colors p-0.5 rounded"
-                title="Manage categories"
+                title={t('nav.manageCategories')}
               >
                 <Tag size={11} />
               </Link>
@@ -293,7 +286,7 @@ export default function Nav() {
                     size={10}
                     className={`transition-transform ${showAllCats ? 'rotate-90' : ''}`}
                   />
-                  {showAllCats ? 'Show less' : `${categories.length - 8} more`}
+                  {showAllCats ? t('nav.showLess') : t('nav.showMore', { n: categories.length - 8 })}
                 </button>
               )}
             </>

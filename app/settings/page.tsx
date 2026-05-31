@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useLocale } from '@/lib/locale-context'
 import {
   Eye,
   EyeOff,
@@ -123,6 +124,7 @@ function ApiKeyField({
   onToast: (t: Toast) => void
   testProvider?: string
 }) {
+  const { t } = useLocale()
   const [key, setKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -146,7 +148,7 @@ function ApiKeyField({
 
   async function handleSave() {
     if (!key.trim()) {
-      onToast({ type: 'error', message: 'Please enter an API key' })
+      onToast({ type: 'error', message: t('settings.ai.enterKey') })
       return
     }
     setSaving(true)
@@ -163,9 +165,8 @@ function ApiKeyField({
       }
       setSavedMasked(key.trim().slice(0, 6) + '••••••••' + key.trim().slice(-4))
       setKey('')
-      // Auto-test after save
       if (testProvider) void handleTest()
-      else onToast({ type: 'success', message: `${label} saved successfully` })
+      else onToast({ type: 'success', message: t('settings.ai.savedMsg', { label }) })
     } catch (err) {
       onToast({
         type: 'error',
@@ -190,7 +191,7 @@ function ApiKeyField({
       }
       setSavedMasked(null)
       setTestState('idle')
-      onToast({ type: 'success', message: `${label} removed` })
+      onToast({ type: 'success', message: t('settings.ai.removedMsg', { label }) })
     } catch (err) {
       onToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to remove key' })
     } finally {
@@ -211,7 +212,7 @@ function ApiKeyField({
       const data = await res.json() as { working: boolean; error?: string }
       if (data.working) {
         setTestState('ok')
-        onToast({ type: 'success', message: `${label} is working` })
+        onToast({ type: 'success', message: t('settings.ai.workingMsg', { label }) })
       } else {
         setTestState('fail')
         setTestError(data.error ?? 'Key test failed')
@@ -229,7 +230,7 @@ function ApiKeyField({
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           {savedMasked && (
             <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-lg min-w-0 overflow-hidden">
-              <Check size={11} className="shrink-0" /> <span className="shrink-0">Saved:</span> <span className="font-mono truncate">{savedMasked}</span>
+              <Check size={11} className="shrink-0" /> <span className="shrink-0">{t('settings.ai.saved')}</span> <span className="font-mono truncate">{savedMasked}</span>
             </span>
           )}
           {savedMasked && (
@@ -237,9 +238,9 @@ function ApiKeyField({
               onClick={() => void handleRemove()}
               disabled={removing}
               className="shrink-0 text-xs text-red-500/70 hover:text-red-400 transition-colors disabled:opacity-50"
-              title="Remove saved key"
+              title={t('settings.ai.remove')}
             >
-              {removing ? 'Removing…' : 'Remove'}
+              {removing ? t('settings.ai.removing') : t('settings.ai.remove')}
             </button>
           )}
           {testProvider && savedMasked && testState === 'idle' && (
@@ -247,22 +248,22 @@ function ApiKeyField({
               onClick={() => void handleTest()}
               className="shrink-0 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
             >
-              Test
+              {t('settings.ai.test')}
             </button>
           )}
           {testState === 'testing' && (
             <span className="flex items-center gap-1 text-xs text-zinc-400 shrink-0">
-              <Loader2 size={11} className="animate-spin" /> Testing…
+              <Loader2 size={11} className="animate-spin" /> {t('settings.ai.testing')}
             </span>
           )}
           {testState === 'ok' && (
             <span className="flex items-center gap-1 text-xs text-emerald-400 shrink-0">
-              <Check size={11} /> Working
+              <Check size={11} /> {t('settings.ai.working')}
             </span>
           )}
           {testState === 'fail' && (
             <span className="flex items-center gap-1 text-xs text-red-400 shrink-0" title={testError}>
-              <X size={11} /> {testError.slice(0, 30) || 'Failed'}
+              <X size={11} /> {testError.slice(0, 30) || t('settings.ai.failed')}
             </span>
           )}
         </div>
@@ -291,7 +292,7 @@ function ApiKeyField({
           disabled={saving}
           className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors shrink-0"
         >
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
       </div>
       <div className="flex items-center justify-between">
@@ -320,6 +321,7 @@ function ModelSelector({
   defaultValue: string
   onToast: (t: Toast) => void
 }) {
+  const { t } = useLocale()
   const [value, setValue] = useState(defaultValue)
   const [saved, setSaved] = useState(false)
 
@@ -342,7 +344,7 @@ function ModelSelector({
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch {
-      onToast({ type: 'error', message: 'Failed to save model preference' })
+      onToast({ type: 'error', message: t('common.failSaveModel') })
     }
   }
 
@@ -351,7 +353,7 @@ function ModelSelector({
   return (
     <>
       <div className="flex items-center gap-2 mt-2.5">
-        <span className="text-xs text-zinc-500 shrink-0">Model:</span>
+        <span className="text-xs text-zinc-500 shrink-0">{t('common.model')}</span>
         <div className="relative flex-1">
           <select
             value={value}
@@ -368,7 +370,7 @@ function ModelSelector({
         </div>
         {saved && (
           <span className="flex items-center gap-1 text-xs text-emerald-400 shrink-0">
-            <Check size={12} /> Saved
+            <Check size={12} /> {t('common.saved')}
           </span>
         )}
         {!saved && selected && (
@@ -377,7 +379,7 @@ function ModelSelector({
       </div>
       {value === 'claude-opus-4-6' && (
         <p className="text-xs text-amber-500/80 mt-1.5">
-          Opus is slow with 20 parallel workers — consider Sonnet or Haiku for faster bulk categorization.
+          {t('common.opusSlow')}
         </p>
       )}
     </>
@@ -391,6 +393,7 @@ interface CliStatus {
 }
 
 function ClaudeCliStatusBox() {
+  const { t } = useLocale()
   const [status, setStatus] = useState<CliStatus | null>(null)
 
   useEffect(() => {
@@ -400,7 +403,7 @@ function ClaudeCliStatusBox() {
       .catch(() => setStatus({ available: false }))
   }, [])
 
-  if (status === null) return null // loading — don't flash UI
+  if (status === null) return null
 
   if (status.available && !status.expired) {
     const tier = status.subscriptionType
@@ -411,10 +414,10 @@ function ClaudeCliStatusBox() {
         <Check size={15} className="text-emerald-400 shrink-0 mt-0.5" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-emerald-300">
-            Claude CLI detected — no API key needed
+            {t('common.cliDetected')}
           </p>
           <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
-            Signed in as <span className="text-zinc-300">{tier}</span> via Claude Code. Siftly will use your subscription automatically. An API key below will take priority if set.
+            {t('common.cliSignedIn', { tier })}
           </p>
         </div>
       </div>
@@ -426,7 +429,7 @@ function ClaudeCliStatusBox() {
       <div className="flex gap-3 p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 mb-5">
         <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-amber-300">Claude CLI session expired</p>
+          <p className="text-sm font-medium text-amber-300">{t('common.cliExpired')}</p>
           <p className="text-xs text-zinc-500 mt-0.5">
             Run <span className="font-mono text-zinc-300">claude</span> in your terminal to refresh the session, then reload this page.
           </p>
@@ -563,6 +566,7 @@ function ProviderToggle({ value, onChange }: { value: 'anthropic' | 'openai' | '
 }
 
 function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
+  const { t } = useLocale()
   const [provider, setProvider] = useState<'anthropic' | 'openai' | 'minimax' | null>(null)
 
   useEffect(() => {
@@ -585,23 +589,22 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
         body: JSON.stringify({ provider: newProvider }),
       })
       if (!res.ok) throw new Error('Failed to save provider')
-      onToast({ type: 'success', message: `Switched to ${labels[newProvider]}` })
+      onToast({ type: 'success', message: t('settings.ai.switchedTo', { label: labels[newProvider] }) })
     } catch {
-      setProvider(prev) // revert on failure
-      onToast({ type: 'error', message: 'Failed to save provider preference' })
+      setProvider(prev)
+      onToast({ type: 'error', message: t('settings.ai.switchFailed') })
     }
   }
 
-  // Don't render until we know the saved provider — avoids flicker
   if (provider === null) {
     return (
       <Section
         icon={Key}
-        title="AI Provider"
-        description="Choose your AI provider and configure keys. CLI auth means no key needed."
+        title={t('settings.ai.title')}
+        description={t('settings.ai.description')}
       >
         <div className="flex items-center gap-2 text-sm text-zinc-500">
-          <Loader2 size={14} className="animate-spin" /> Loading settings…
+          <Loader2 size={14} className="animate-spin" /> {t('settings.ai.loading')}
         </div>
       </Section>
     )
@@ -610,8 +613,8 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
   return (
     <Section
       icon={Key}
-      title="AI Provider"
-      description="Choose your AI provider and configure keys. CLI auth means no key needed."
+      title={t('settings.ai.title')}
+      description={t('settings.ai.description')}
     >
       <ProviderToggle value={provider} onChange={(v) => void handleProviderChange(v)} />
 
@@ -624,7 +627,7 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
                 label="Anthropic (Claude)"
                 placeholder="sk-ant-api03-..."
                 fieldKey="anthropicApiKey"
-                hint="Used for AI categorization, search, and image analysis."
+                hint={t('settings.ai.hint')}
                 docHref="https://console.anthropic.com"
                 onToast={onToast}
                 testProvider="anthropic"
@@ -635,7 +638,7 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
                 defaultValue="claude-haiku-4-5-20251001"
                 onToast={onToast}
               />
-              <p className="text-xs text-zinc-500 mt-1.5">Applies to all AI operations — API key <strong className="text-zinc-400 font-medium">and Claude CLI</strong></p>
+              <p className="text-xs text-zinc-500 mt-1.5">{t('settings.ai.appliesTo.anthropic')}</p>
             </div>
           </div>
         </>
@@ -648,7 +651,7 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
                 label="OpenAI"
                 placeholder="sk-..."
                 fieldKey="openaiApiKey"
-                hint="Used for AI categorization, search, and image analysis."
+                hint={t('settings.ai.hint')}
                 docHref="https://platform.openai.com/api-keys"
                 onToast={onToast}
                 testProvider="openai"
@@ -659,7 +662,7 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
                 defaultValue="gpt-4.1-mini"
                 onToast={onToast}
               />
-              <p className="text-xs text-zinc-500 mt-1.5">Applies to all AI operations — API key <strong className="text-zinc-400 font-medium">and Codex CLI</strong></p>
+              <p className="text-xs text-zinc-500 mt-1.5">{t('settings.ai.appliesTo.openai')}</p>
             </div>
           </div>
         </>
@@ -670,7 +673,7 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
               label="MiniMax"
               placeholder="eyJ..."
               fieldKey="minimaxApiKey"
-              hint="Used for AI categorization, search, and image analysis."
+              hint={t('settings.ai.hint')}
               docHref="https://platform.minimaxi.com/user-center/basic-information/interface-key"
               onToast={onToast}
               testProvider="minimax"
@@ -802,6 +805,7 @@ function FolderBrowser({ onSelect, onClose }: { onSelect: (path: string) => void
 }
 
 function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
+  const { t } = useLocale()
   const [vaultPath, setVaultPath] = useState('')
   const [savedPath, setSavedPath] = useState<string | null>(null)
   const [savingPath, setSavingPath] = useState(false)
@@ -856,7 +860,7 @@ function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Export failed')
       setResult(data)
-      onToast({ type: 'success', message: `Exported ${data.written} notes to Obsidian` })
+      onToast({ type: 'success', message: t('settings.obsidian.exportedMsg', { n: data.written }) })
     } catch (err) {
       onToast({ type: 'error', message: err instanceof Error ? err.message : 'Export failed' })
     } finally {
@@ -873,12 +877,12 @@ function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
   return (
     <Section
       icon={BookOpen}
-      title="Obsidian Export"
-      description="Export bookmarks as Markdown notes with YAML frontmatter, wikilinks, and index files."
+      title={t('settings.obsidian.title')}
+      description={t('settings.obsidian.description')}
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">Vault path</label>
+          <label className="block text-sm font-medium text-zinc-400 mb-1.5">{t('settings.obsidian.vaultPath')}</label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <FolderOpen size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
@@ -892,7 +896,7 @@ function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
             </div>
             <button
               onClick={() => setBrowserOpen(!browserOpen)}
-              title="Browse folders"
+              title={t('settings.obsidian.browseFolders')}
               className="px-3 py-2.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors"
             >
               <Folder size={16} />
@@ -902,12 +906,12 @@ function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
               disabled={savingPath || !vaultPath.trim()}
               className="px-4 py-2.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-sm font-medium text-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {savingPath ? 'Saving...' : 'Save'}
+              {savingPath ? t('settings.obsidian.saving') : t('settings.obsidian.save')}
             </button>
           </div>
           {savedPath && (
             <p className="text-xs text-zinc-500 mt-1.5">
-              Current: <code className="font-mono text-zinc-400">{savedPath}</code>
+              {t('settings.obsidian.current')} <code className="font-mono text-zinc-400">{savedPath}</code>
             </p>
           )}
         </div>
@@ -927,7 +931,7 @@ function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
               onChange={(e) => setOverwrite(e.target.checked)}
               className="rounded border-zinc-600 bg-zinc-800 text-indigo-500 focus:ring-indigo-500/50"
             />
-            Overwrite existing notes
+            {t('settings.obsidian.overwrite')}
           </label>
         </div>
 
@@ -939,12 +943,12 @@ function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
           {exporting ? (
             <>
               <Loader2 size={14} className="animate-spin" />
-              Exporting...
+              {t('settings.obsidian.exporting')}
             </>
           ) : (
             <>
               <Download size={14} />
-              Export to Obsidian
+              {t('settings.obsidian.export')}
             </>
           )}
         </button>
@@ -963,22 +967,23 @@ function ObsidianExportBlock({ onToast }: { onToast: (t: Toast) => void }) {
 }
 
 function DataSection() {
+  const { t } = useLocale()
   return (
     <Section
       icon={Database}
-      title="Data Management"
-      description="Export all your bookmarks and category data for backup or migration."
+      title={t('settings.data.title')}
+      description={t('settings.data.description')}
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <ExportButton
-          label="Export as CSV"
+          label={t('settings.data.exportCsv')}
           href="/api/export?type=csv"
-          description="Spreadsheet-compatible format"
+          description={t('settings.data.exportCsvDesc')}
         />
         <ExportButton
-          label="Export as JSON"
+          label={t('settings.data.exportJson')}
           href="/api/export?type=json"
-          description="Full data with all fields"
+          description={t('settings.data.exportJsonDesc')}
         />
       </div>
     </Section>
@@ -986,6 +991,7 @@ function DataSection() {
 }
 
 function DangerZoneSection({ onToast }: { onToast: (t: Toast) => void }) {
+  const { t } = useLocale()
   const [confirming, setConfirming] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [cleared, setCleared] = useState(false)
@@ -1001,7 +1007,7 @@ function DangerZoneSection({ onToast }: { onToast: (t: Toast) => void }) {
         const data = await res.json() as { error?: string }
         throw new Error(data.error ?? 'Failed to clear')
       }
-      onToast({ type: 'success', message: 'All bookmarks deleted successfully' })
+      onToast({ type: 'success', message: t('settings.danger.clearedMsg') })
       setConfirming(false)
       setCleared(true)
       setTimeout(() => setCleared(false), 3000)
@@ -1016,19 +1022,19 @@ function DangerZoneSection({ onToast }: { onToast: (t: Toast) => void }) {
   return (
     <Section
       icon={Shield}
-      title="Danger Zone"
-      description="Irreversible actions that affect all your data."
+      title={t('settings.danger.title')}
+      description={t('settings.danger.description')}
       variant="danger"
     >
       <div className="flex items-center justify-between p-4 rounded-xl bg-red-900/20 border border-red-800/40">
         <div>
-          <p className="text-sm font-medium text-zinc-300">Clear all bookmarks</p>
-          <p className="text-xs text-zinc-500 mt-0.5">Permanently delete all imported bookmarks</p>
+          <p className="text-sm font-medium text-zinc-300">{t('settings.danger.clearTitle')}</p>
+          <p className="text-xs text-zinc-500 mt-0.5">{t('settings.danger.clearDesc')}</p>
         </div>
         {cleared ? (
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
             <Check size={14} />
-            Cleared
+            {t('settings.danger.cleared')}
           </div>
         ) : !confirming ? (
           <button
@@ -1036,17 +1042,17 @@ function DangerZoneSection({ onToast }: { onToast: (t: Toast) => void }) {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-red-400 bg-red-800/30 hover:bg-red-700/40 border border-red-700/50 hover:border-red-600/60 transition-all"
           >
             <Trash2 size={14} />
-            Clear all
+            {t('settings.danger.clearAll')}
           </button>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-400 mr-1">Are you sure?</span>
+            <span className="text-xs text-zinc-400 mr-1">{t('settings.danger.confirm')}</span>
             <button
               onClick={() => setConfirming(false)}
               disabled={clearing}
               className="px-3 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
             >
-              Cancel
+              {t('settings.danger.cancel')}
             </button>
             <button
               onClick={() => void handleClearAll()}
@@ -1054,7 +1060,7 @@ function DangerZoneSection({ onToast }: { onToast: (t: Toast) => void }) {
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Trash2 size={12} />
-              {clearing ? 'Deleting…' : 'Yes, delete all'}
+              {clearing ? t('settings.danger.deleting') : t('settings.danger.confirmDelete')}
             </button>
           </div>
         )}
@@ -1074,6 +1080,7 @@ const TECH_STACK = [
 const DONATION_ADDRESS = '0xcF10B967a9e422753812004Cd59990f62E360760'
 
 function AboutSection() {
+  const { t } = useLocale()
   const [copied, setCopied] = useState(false)
 
   function copyAddress() {
@@ -1084,7 +1091,7 @@ function AboutSection() {
   }
 
   return (
-    <Section icon={Info} title="About Siftly" description="Self-hosted Twitter bookmark manager">
+    <Section icon={Info} title={t('settings.about.title')} description={t('settings.about.description')}>
       <p className="text-sm text-zinc-400 leading-relaxed mb-5">
         <strong className="text-zinc-100 font-semibold">Siftly</strong> is a self-hosted app for
         organizing your Twitter/X bookmarks. Use the built-in bookmarklet or console script to import,
@@ -1104,7 +1111,7 @@ function AboutSection() {
           <span className="text-base leading-none">𝕏</span>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-zinc-200 group-hover:text-white transition-colors">@viperr</p>
-            <p className="text-[11px] text-zinc-600">Built &amp; open-sourced by</p>
+            <p className="text-[11px] text-zinc-600">{t('settings.about.builtBy')}</p>
           </div>
           <ExternalLink size={12} className="text-zinc-600 group-hover:text-zinc-400 transition-colors ml-auto shrink-0" />
         </a>
@@ -1113,10 +1120,10 @@ function AboutSection() {
         <div className="flex-1 px-4 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20">
           <div className="flex items-center gap-2 mb-2">
             <Coffee size={13} className="text-amber-400 shrink-0" />
-            <span className="text-xs font-semibold text-amber-300">Support development</span>
+            <span className="text-xs font-semibold text-amber-300">{t('settings.about.support')}</span>
           </div>
           <p className="text-[11px] text-zinc-500 mb-2.5 leading-relaxed">
-            If Siftly saves you time, consider leaving a tip
+            {t('settings.about.supportDesc')}
           </p>
           <button
             onClick={copyAddress}
@@ -1131,7 +1138,7 @@ function AboutSection() {
             }
           </button>
           {copied && (
-            <p className="text-[10px] text-emerald-400 mt-1.5 text-center">Address copied!</p>
+            <p className="text-[10px] text-emerald-400 mt-1.5 text-center">{t('settings.about.copied')}</p>
           )}
         </div>
       </div>
@@ -1140,6 +1147,7 @@ function AboutSection() {
 }
 
 function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
+  const { t } = useLocale()
   const [clientId, setClientId] = useState('')
   const [clientSecret, setClientSecret] = useState('')
   const [savedId, setSavedId] = useState<string | null>(null)
@@ -1158,7 +1166,7 @@ function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
 
   async function handleSave() {
     if (!clientId.trim()) {
-      onToast({ type: 'error', message: 'Client ID is required' })
+      onToast({ type: 'error', message: t('settings.xoauth.clientIdRequired') })
       return
     }
     setSaving(true)
@@ -1178,7 +1186,7 @@ function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
       if (clientSecret.trim()) setSavedSecret(clientSecret.trim().slice(0, 4) + '••••')
       setClientId('')
       setClientSecret('')
-      onToast({ type: 'success', message: 'X OAuth credentials saved' })
+      onToast({ type: 'success', message: t('settings.xoauth.savedMsg') })
     } catch (err) {
       onToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save' })
     } finally {
@@ -1213,8 +1221,8 @@ function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
   return (
     <Section
       icon={Shield}
-      title="X (Twitter) OAuth 2.0"
-      description="Connect your X account to import bookmarks using the official API."
+      title={t('settings.xoauth.title')}
+      description={t('settings.xoauth.description')}
     >
       <div className="space-y-4">
         {savedId ? (
@@ -1267,7 +1275,7 @@ function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Key size={14} />}
-              {saving ? 'Saving...' : 'Save X OAuth Credentials'}
+              {saving ? t('settings.xoauth.saving') : t('settings.xoauth.save')}
             </button>
           </div>
         )}
@@ -1289,10 +1297,11 @@ function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
 }
 
 export default function SettingsPage() {
+  const { t } = useLocale()
   const [toast, setToast] = useState<Toast | null>(null)
 
-  function showToast(t: Toast) {
-    setToast(t)
+  function showToast(toast: Toast) {
+    setToast(toast)
     setTimeout(() => setToast(null), 4000)
   }
 
@@ -1302,8 +1311,8 @@ export default function SettingsPage() {
       {/* Page Header */}
       <div className="mb-8">
         <p className="text-xs text-zinc-500 uppercase tracking-widest font-medium mb-1">Configuration</p>
-        <h1 className="text-2xl font-bold text-zinc-100">Settings</h1>
-        <p className="text-zinc-400 mt-1 text-sm">Configure your Siftly instance</p>
+        <h1 className="text-2xl font-bold text-zinc-100">{t('settings.title')}</h1>
+        <p className="text-zinc-400 mt-1 text-sm">Configure your Yadorigi instance</p>
       </div>
 
       {/* Toast */}

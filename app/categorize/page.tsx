@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Sparkles, Loader2, CheckCircle, ChevronRight, Eye, Tag, Brain, Layers, StopCircle } from 'lucide-react'
+import { Sparkles, Loader2, CheckCircle, ChevronRight, Eye, Tag, Brain, Layers, StopCircle, AlertTriangle } from 'lucide-react'
 import * as Progress from '@radix-ui/react-progress'
+import { useLocale } from '@/lib/locale-context'
 
 type Stage = 'vision' | 'entities' | 'enrichment' | 'categorize' | 'parallel' | null
 
@@ -22,42 +23,44 @@ interface CategorizeStatus {
   stageCounts: StageCounts
   lastError: string | null
   error: string | null
-}
-
-const STAGE_INFO: Record<NonNullable<Stage>, { label: string; icon: React.ReactNode; desc: string }> = {
-  vision: {
-    label: 'Analyzing images',
-    icon: <Eye size={14} />,
-    desc: 'Extracting text, objects, and context from photos, GIFs, and videos',
-  },
-  entities: {
-    label: 'Extracting entities',
-    icon: <Tag size={14} />,
-    desc: 'Mining hashtags, URLs, and tool mentions from tweet data',
-  },
-  enrichment: {
-    label: 'Generating semantic tags',
-    icon: <Brain size={14} />,
-    desc: 'Creating 30-50 searchable tags per bookmark for AI search',
-  },
-  categorize: {
-    label: 'Categorizing',
-    icon: <Layers size={14} />,
-    desc: 'Assigning each bookmark to the most relevant categories',
-  },
-  parallel: {
-    label: 'Processing all stages in parallel',
-    icon: <Sparkles size={14} />,
-    desc: 'Vision, enrichment, and categorization running concurrently across 20 workers',
-  },
+  rateLimitHit: boolean
 }
 
 export default function CategorizePage() {
+  const { t } = useLocale()
   const [status, setStatus] = useState<CategorizeStatus | null>(null)
   const [running, setRunning] = useState(false)
   const [stopping, setStopping] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
+
+  const STAGE_INFO: Record<NonNullable<Stage>, { label: string; icon: React.ReactNode; desc: string }> = {
+    vision: {
+      label: t('categorize.stage.vision'),
+      icon: <Eye size={14} />,
+      desc: t('categorize.stage.visionDesc'),
+    },
+    entities: {
+      label: t('categorize.stage.entities'),
+      icon: <Tag size={14} />,
+      desc: t('categorize.stage.entitiesDesc'),
+    },
+    enrichment: {
+      label: t('categorize.stage.enrichment'),
+      icon: <Brain size={14} />,
+      desc: t('categorize.stage.enrichmentDesc'),
+    },
+    categorize: {
+      label: t('categorize.stage.categorize'),
+      icon: <Layers size={14} />,
+      desc: t('categorize.stage.categorizeDesc'),
+    },
+    parallel: {
+      label: t('categorize.stage.parallel'),
+      icon: <Sparkles size={14} />,
+      desc: t('categorize.stage.parallelDesc'),
+    },
+  }
 
   // On mount, check if pipeline is already running on the server
   useEffect(() => {
@@ -137,11 +140,11 @@ export default function CategorizePage() {
     <div className="p-8 max-w-xl mx-auto">
       <div className="mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-4">
-          <Sparkles size={12} /> AI Categorization
+          <Sparkles size={12} /> {t('categorize.badge')}
         </div>
-        <h1 className="text-2xl font-bold text-zinc-100">Categorize Bookmarks</h1>
+        <h1 className="text-2xl font-bold text-zinc-100">{t('categorize.title')}</h1>
         <p className="text-zinc-400 mt-1 text-sm">
-          4-stage AI pipeline: vision analysis → entity extraction → semantic tagging → categorization.
+          {t('categorize.description')}
         </p>
       </div>
 
@@ -154,8 +157,7 @@ export default function CategorizePage() {
               </p>
             )}
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Analyzes images for text and context, mines tweet entities for free, generates
-              semantic search tags, then categorizes — all automatically.
+              {t('categorize.intro')}
             </p>
             <div className="space-y-2">
               <button
@@ -163,13 +165,13 @@ export default function CategorizePage() {
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
               >
                 <Sparkles size={16} />
-                Start AI Categorization
+                {t('categorize.startButton')}
               </button>
               <button
                 onClick={() => void startCategorization(true)}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-sm font-medium transition-colors border border-zinc-700"
               >
-                Re-run everything (force all)
+                {t('categorize.forceButton')}
               </button>
             </div>
           </>
@@ -177,8 +179,22 @@ export default function CategorizePage() {
 
         {running && (
           <div className="space-y-5">
+            {/* Rate limit error — prominent warning */}
+            {status?.rateLimitHit && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+                <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-red-300 text-sm font-semibold">{t('categorize.rateLimitTitle')}</p>
+                  <p className="text-red-400/80 text-xs mt-1">{t('categorize.rateLimitDesc')}</p>
+                  {status.lastError && (
+                    <p className="text-red-500/70 text-xs mt-1 font-mono break-all">{status.lastError}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Current stage indicator */}
-            {currentStageInfo && (
+            {currentStageInfo && !status?.rateLimitHit && (
               <div className="flex items-start gap-3 p-3.5 rounded-xl bg-indigo-500/8 border border-indigo-500/20">
                 <div className="text-indigo-400 mt-0.5 shrink-0">{currentStageInfo.icon}</div>
                 <div>
@@ -193,10 +209,10 @@ export default function CategorizePage() {
             {status?.stageCounts && (
               <div className="space-y-1.5">
                 {[
-                  { key: 'visionTagged', label: 'images analyzed', icon: <Eye size={13} />, active: status.stage === 'vision' || status.stage === 'parallel' },
-                  { key: 'entitiesExtracted', label: 'entities extracted', icon: <Tag size={13} />, active: status.stage === 'entities' },
-                  { key: 'enriched', label: 'bookmarks enriched', icon: <Brain size={13} />, active: status.stage === 'enrichment' || status.stage === 'parallel' },
-                  { key: 'categorized', label: 'categorized', icon: <Layers size={13} />, active: status.stage === 'categorize' || status.stage === 'parallel' },
+                  { key: 'visionTagged', label: t('categorize.counter.vision'), icon: <Eye size={13} />, active: status.stage === 'vision' || status.stage === 'parallel' },
+                  { key: 'entitiesExtracted', label: t('categorize.counter.entities'), icon: <Tag size={13} />, active: status.stage === 'entities' },
+                  { key: 'enriched', label: t('categorize.counter.enriched'), icon: <Brain size={13} />, active: status.stage === 'enrichment' || status.stage === 'parallel' },
+                  { key: 'categorized', label: t('categorize.counter.categorized'), icon: <Layers size={13} />, active: status.stage === 'categorize' || status.stage === 'parallel' },
                 ].map(({ key, label, icon, active }) => {
                   const count = status.stageCounts[key as keyof StageCounts]
                   const total = key === 'categorized' ? status.total : null
@@ -208,7 +224,7 @@ export default function CategorizePage() {
                       </span>
                       <span className="text-zinc-500 text-sm">
                         {label}
-                        {total != null && total > 0 ? <span className="text-zinc-600"> — {total - count} remaining</span> : null}
+                        {total != null && total > 0 ? <span className="text-zinc-600"> — {t('categorize.remaining', { n: total - count })}</span> : null}
                       </span>
                       {active && <Loader2 size={12} className="text-indigo-400 animate-spin ml-auto shrink-0" />}
                       {!active && count > 0 && <CheckCircle size={12} className="text-emerald-500 ml-auto shrink-0" />}
@@ -225,11 +241,11 @@ export default function CategorizePage() {
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-red-400 text-sm font-medium transition-colors border border-red-500/20"
             >
               <StopCircle size={15} />
-              {stopping ? 'Stopping…' : 'Stop pipeline'}
+              {stopping ? t('categorize.stopping') : t('categorize.stopButton')}
             </button>
 
-            {/* Last error warning */}
-            {status?.lastError && (
+            {/* Last error warning (non-rate-limit) */}
+            {status?.lastError && !status.rateLimitHit && (
               <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
                 ⚠ {status.lastError}
               </p>
@@ -239,7 +255,7 @@ export default function CategorizePage() {
             {(status?.stage === 'categorize' || status?.stage === 'parallel') && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-zinc-500">
-                  <span>{status.done} / {status.total} bookmarks</span>
+                  <span>{status.done} / {status.total} {t('categorize.bookmarks')}</span>
                   <span>{progress}%</span>
                 </div>
                 <Progress.Root className="relative h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
@@ -255,20 +271,34 @@ export default function CategorizePage() {
 
         {done && (
           <div className="flex flex-col items-center gap-5 py-4 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle size={32} className="text-emerald-400" />
-            </div>
+            {/* Rate limit ended the pipeline */}
+            {status?.rateLimitHit ? (
+              <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <AlertTriangle size={32} className="text-red-400" />
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                <CheckCircle size={32} className="text-emerald-400" />
+              </div>
+            )}
             <div>
-              <p className="text-xl font-bold text-zinc-100">Pipeline Complete!</p>
+              <p className="text-xl font-bold text-zinc-100">
+                {status?.rateLimitHit ? t('categorize.rateLimitStopped') : t('categorize.complete')}
+              </p>
+              {status?.rateLimitHit && (
+                <p className="text-red-400/80 text-sm mt-1">{t('categorize.rateLimitRetryHint')}</p>
+              )}
               {status?.stageCounts && (
                 <p className="text-zinc-500 text-sm mt-1">
-                  {status.stageCounts.visionTagged} images analyzed ·{' '}
-                  {status.stageCounts.enriched} bookmarks enriched ·{' '}
-                  {status.stageCounts.categorized} categorized
+                  {t('categorize.completeSummary', {
+                    vision: status.stageCounts.visionTagged,
+                    enriched: status.stageCounts.enriched,
+                    categorized: status.stageCounts.categorized,
+                  })}
                 </p>
               )}
             </div>
-            {status?.error && (
+            {status?.error && !status.rateLimitHit && (
               <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-left w-full">
                 {status.error}
               </p>
@@ -278,13 +308,13 @@ export default function CategorizePage() {
                 href="/bookmarks"
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-colors"
               >
-                View bookmarks <ChevronRight size={14} />
+                {t('categorize.viewBookmarks')} <ChevronRight size={14} />
               </Link>
               <button
                 onClick={() => { setDone(false); setStatus(null) }}
                 className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors border border-zinc-700"
               >
-                Run again
+                {t('categorize.runAgain')}
               </button>
             </div>
           </div>
