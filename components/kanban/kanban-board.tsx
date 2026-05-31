@@ -33,9 +33,16 @@ export function KanbanBoard({ initialBookmarks }: Props) {
     if (!over) return;
 
     const bookmarkId = active.id as string;
-    const targetStatus = over.id as BookmarkStatus;
 
-    if (!STATUSES.includes(targetStatus)) return;
+    // over.id はカラムのステータス文字列か、カード上にドロップした場合はカードID
+    let targetStatus: BookmarkStatus;
+    if (STATUSES.includes(over.id as BookmarkStatus)) {
+      targetStatus = over.id as BookmarkStatus;
+    } else {
+      const overBookmark = bookmarks.find(b => b.id === over.id);
+      if (!overBookmark) return;
+      targetStatus = overBookmark.status ?? 'TO_READ';
+    }
 
     const current = bookmarks.find(b => b.id === bookmarkId);
     if (!current || current.status === targetStatus) return;
