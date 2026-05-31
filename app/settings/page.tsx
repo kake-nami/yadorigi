@@ -1153,6 +1153,11 @@ function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
   const [savedId, setSavedId] = useState<string | null>(null)
   const [savedSecret, setSavedSecret] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [callbackUrl, setCallbackUrl] = useState('/api/import/x-oauth/callback')
+
+  useEffect(() => {
+    setCallbackUrl(`${window.location.origin}/api/import/x-oauth/callback`)
+  }, [])
 
   useEffect(() => {
     fetch('/api/settings')
@@ -1213,10 +1218,6 @@ function XOAuthSection({ onToast }: { onToast: (t: Toast) => void }) {
       onToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to remove' })
     }
   }
-
-  const callbackUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/api/import/x-oauth/callback`
-    : '/api/import/x-oauth/callback'
 
   return (
     <Section
