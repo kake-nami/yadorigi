@@ -688,7 +688,7 @@ function ApiKeySection({ onToast }: { onToast: (t: Toast) => void }) {
           </div>
         </div>
       )}
-      <p className="text-xs text-zinc-600 mt-4">Keys are stored in plaintext in your local SQLite database (<code className="font-mono">prisma/dev.db</code>). Do not expose the database file.</p>
+      <p className="text-xs text-zinc-600 mt-4">Keys are stored in plaintext in your local SQLite database (<code className="font-mono">data/yadorigi.db</code>). Do not expose the database file.</p>
     </Section>
   )
 }
