@@ -14,6 +14,15 @@ export const bookmarksRouter = router({
       })
     ),
 
+  updateStatusBatch: publicProcedure
+    .input(z.object({ ids: z.array(z.string()), status: BookmarkStatusSchema }))
+    .mutation(({ input }) =>
+      db.bookmark.updateMany({
+        where: { id: { in: input.ids } },
+        data: { status: input.status, statusUpdatedAt: new Date() },
+      })
+    ),
+
   markAsOpened: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {

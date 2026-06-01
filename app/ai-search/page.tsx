@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Sparkles, Search, Loader2, BookMarked, AlertCircle, ImageIcon } from 'lucide-react'
 import BookmarkCard from '@/components/bookmark-card'
 import type { BookmarkWithMedia } from '@/lib/types'
+import { useLocale } from '@/lib/locale-context'
 
 // Extends BookmarkWithMedia with AI-specific fields returned by the search API
 interface AIBookmark extends BookmarkWithMedia {
@@ -11,7 +12,15 @@ interface AIBookmark extends BookmarkWithMedia {
   aiReason: string
 }
 
-const EXAMPLES = [
+const EXAMPLES_JA = [
+  'AIが開発者を代替するミーム',
+  '試してみたいSolana DeFiツール',
+  '生産性と集中力に関する何か',
+  '仮想通貨市場暴落のミーム',
+  '開発を速くするクールなツール',
+]
+
+const EXAMPLES_EN = [
   'funny meme about AI replacing developers',
   'Solana DeFi tools I should try',
   'something about productivity and focus',
@@ -26,6 +35,7 @@ interface ImageStats {
 }
 
 export default function AISearchPage() {
+  const { t, locale } = useLocale()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<AIBookmark[]>([])
   const [explanation, setExplanation] = useState('')
@@ -37,14 +47,14 @@ export default function AISearchPage() {
   const [pipelineRunning, setPipelineRunning] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  const EXAMPLES = locale === 'ja' ? EXAMPLES_JA : EXAMPLES_EN
+
   useEffect(() => {
     inputRef.current?.focus()
-    // Load image analysis progress
     fetch('/api/analyze/images')
       .then((r) => r.json())
       .then((data: ImageStats) => setImageStats(data))
       .catch(() => {})
-    // Hide standalone image analysis when the main pipeline is already handling it
     fetch('/api/categorize')
       .then((r) => r.json())
       .then((d: { status: string }) => {
@@ -57,7 +67,6 @@ export default function AISearchPage() {
     if (analyzing) return
     setAnalyzing(true)
     try {
-      // Run batches until ALL images are processed (no cap)
       while (true) {
         const res = await fetch('/api/analyze/images', {
           method: 'POST',
@@ -71,7 +80,6 @@ export default function AISearchPage() {
         if (data.remaining === 0) break
       }
     } catch {
-      // silent — refresh stats on error
       const statsRes = await fetch('/api/analyze/images')
       const stats = (await statsRes.json()) as ImageStats
       setImageStats(stats)
@@ -116,7 +124,6 @@ export default function AISearchPage() {
 
   function handleExampleClick(example: string) {
     setQuery(example)
-    // Use a short timeout so the state update propagates before the search fires
     setTimeout(() => {
       void handleSearch()
     }, 100)
@@ -127,13 +134,13 @@ export default function AISearchPage() {
       {/* Header */}
       <div className="mb-6 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-4">
-          <Sparkles size={12} /> AI-Powered Search
+          <Sparkles size={12} /> {t('aiSearch.badge')}
         </div>
         <h1 className="text-3xl font-bold text-zinc-100 mb-2">
-          Find anything in your bookmarks
+          {t('aiSearch.title')}
         </h1>
         <p className="text-zinc-500 text-sm">
-          Describe what you&apos;re looking for below.
+          {t('aiSearch.subtitle')}
         </p>
       </div>
 
@@ -144,7 +151,7 @@ export default function AISearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`e.g. "that funny meme about devs crying over AI" or "Solana tools for tracking wallets"`}
+          placeholder={t('aiSearch.placeholder')}
           rows={3}
           className="w-full px-4 py-4 pr-36 rounded-2xl bg-zinc-900 border border-zinc-700 text-zinc-100 placeholder:text-zinc-600 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-none"
         />
@@ -158,25 +165,28 @@ export default function AISearchPage() {
           ) : (
             <Sparkles size={14} />
           )}
-          {loading ? 'Searching\u2026' : 'Search'}
+          {loading ? t('aiSearch.searching') : t('aiSearch.search')}
         </button>
       </div>
-      <p className="text-xs text-zinc-600 mb-8 text-right">⌘+Enter to search</p>
+      <p className="text-xs text-zinc-600 mb-8 text-right">{t('aiSearch.shortcut')}</p>
 
-      {/* Image analysis status — hidden while main pipeline is running (it handles vision internally) */}
+      {/* Image analysis status */}
       {imageStats !== null && !pipelineRunning && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 mb-6 text-xs">
           <ImageIcon size={13} className="text-zinc-500 shrink-0" />
           <div className="flex-1 min-w-0">
             {imageStats.remaining === 0 ? (
               <span className="text-zinc-400">
-                <span className="text-emerald-400 font-medium">{imageStats.tagged}</span> images analyzed for visual search
+                <span className="text-emerald-400 font-medium">{imageStats.tagged}</span>{' '}
+                {t('aiSearch.imagesAll', { n: imageStats.tagged })}
               </span>
             ) : (
               <span className="text-zinc-400">
-                <span className="text-indigo-400 font-medium">{imageStats.tagged}</span> of{' '}
-                <span className="font-medium">{imageStats.total}</span> images analyzed —{' '}
-                <span className="text-zinc-500">{imageStats.remaining} remaining</span>
+                {t('aiSearch.imagesPartial', {
+                  tagged: imageStats.tagged,
+                  total: imageStats.total,
+                  remaining: imageStats.remaining,
+                })}
               </span>
             )}
           </div>
@@ -187,16 +197,16 @@ export default function AISearchPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium transition-colors shrink-0"
             >
               {analyzing ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-              {analyzing ? 'Analyzing…' : 'Analyze images'}
+              {analyzing ? t('aiSearch.analyzing') : t('aiSearch.analyzeImages')}
             </button>
           )}
         </div>
       )}
 
-      {/* Example queries — shown only before first search */}
+      {/* Example queries */}
       {!searched && (
         <div className="mb-8">
-          <p className="text-xs text-zinc-600 mb-3 uppercase tracking-wider">Try these</p>
+          <p className="text-xs text-zinc-600 mb-3 uppercase tracking-wider">{t('aiSearch.tryThese')}</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLES.map((ex) => (
               <button
@@ -222,7 +232,7 @@ export default function AISearchPage() {
       {searched && !loading && results.length === 0 && !error && (
         <div className="text-center py-16 text-zinc-600">
           <BookMarked size={36} className="mx-auto mb-3 opacity-30" />
-          <p>No bookmarks matched that description. Try different words.</p>
+          <p>{t('aiSearch.noResults')}</p>
         </div>
       )}
 
@@ -232,7 +242,8 @@ export default function AISearchPage() {
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-zinc-400">{explanation}</p>
             <span className="text-xs text-zinc-600">
-              {results.length} result{results.length !== 1 ? 's' : ''}
+              {t('aiSearch.resultCount', { n: results.length })}
+              {locale === 'en' && results.length !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="flex flex-col gap-6">
@@ -244,7 +255,6 @@ export default function AISearchPage() {
                     <span className="text-xs text-indigo-400/80 leading-relaxed">{b.aiReason}</span>
                   </div>
                 )}
-                {/* Cast to BookmarkWithMedia since BookmarkCard does not use the AI-specific fields */}
                 <BookmarkCard bookmark={b as BookmarkWithMedia} />
               </div>
             ))}
@@ -252,7 +262,7 @@ export default function AISearchPage() {
         </div>
       )}
 
-      {/* Unused import guard — Search icon used as aria hint */}
+      {/* Unused import guard */}
       <span className="sr-only">
         <Search size={0} />
       </span>

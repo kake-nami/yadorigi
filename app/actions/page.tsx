@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { Archive, Plus } from 'lucide-react';
 import type { ActionItem } from '@/lib/types';
 import { trpc } from '@/lib/trpc-client';
+import { useLocale } from '@/lib/locale-context';
 
 const COLOR_PRESETS = ['#1d9bf0', '#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#14b8a6'];
 
 export default function ActionsPage() {
+  const { t } = useLocale();
   const [items, setItems] = useState<ActionItem[]>([]);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
@@ -47,7 +49,7 @@ export default function ActionsPage() {
     <div className="p-6 max-w-xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-          行動予定
+          {t('actions.title')}
         </h1>
         <button
           onClick={() => setCreating(true)}
@@ -55,7 +57,7 @@ export default function ActionsPage() {
           style={{ backgroundColor: 'var(--color-accent)', color: '#fff' }}
         >
           <Plus size={14} />
-          追加
+          {t('actions.add')}
         </button>
       </div>
 
@@ -69,7 +71,7 @@ export default function ActionsPage() {
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false); }}
-            placeholder="行動予定の名前"
+            placeholder={t('actions.placeholder')}
             className="w-full text-sm px-3 py-2 rounded-lg outline-none"
             style={{
               backgroundColor: 'var(--color-surface-raised)',
@@ -78,7 +80,7 @@ export default function ActionsPage() {
             }}
           />
           <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>色:</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{t('actions.color')}</span>
             {COLOR_PRESETS.map(c => (
               <button
                 key={c}
@@ -99,7 +101,7 @@ export default function ActionsPage() {
               className="text-xs px-3 py-1.5 rounded-full"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              キャンセル
+              {t('actions.cancel')}
             </button>
             <button
               onClick={handleCreate}
@@ -107,7 +109,7 @@ export default function ActionsPage() {
               className="text-xs px-3 py-1.5 rounded-full disabled:opacity-40"
               style={{ backgroundColor: 'var(--color-accent)', color: '#fff' }}
             >
-              作成
+              {t('actions.create')}
             </button>
           </div>
         </div>
@@ -133,7 +135,7 @@ export default function ActionsPage() {
               style={{ color: 'var(--color-text-secondary)' }}
               onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-destructive)')}
               onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
-              title="アーカイブ"
+              title={t('actions.archive')}
             >
               <Archive size={14} />
             </button>
@@ -141,7 +143,7 @@ export default function ActionsPage() {
         ))}
         {items.length === 0 && !creating && (
           <li className="text-sm text-center py-8" style={{ color: 'var(--color-text-secondary)' }}>
-            行動予定がありません
+            {t('actions.noItems')}
           </li>
         )}
       </ul>

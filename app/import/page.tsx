@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { Upload, CheckCircle, ChevronRight, Loader2, Copy, Check, ExternalLink, Sparkles, Eye, Tag, Brain, Layers, StopCircle, RefreshCw, Clock, KeyRound, Trash2, AlertCircle, User, LogOut } from 'lucide-react'
 import * as Progress from '@radix-ui/react-progress'
+import { useLocale } from '@/lib/locale-context'
 
 type Step = 1 | 2 | 3
 type Method = 'bookmarklet' | 'console' | 'live'
@@ -34,32 +35,15 @@ interface CategorizeStatus {
   error: string | null
 }
 
-const STAGE_INFO: Record<NonNullable<Stage>, { label: string; icon: React.ReactNode; desc: string }> = {
-  vision: {
-    label: 'Analyzing images',
-    icon: <Eye size={14} />,
-    desc: 'Extracting text, objects, and context from photos, GIFs, and videos',
-  },
-  entities: {
-    label: 'Extracting entities',
-    icon: <Tag size={14} />,
-    desc: 'Mining hashtags, URLs, and tool mentions from tweet data',
-  },
-  enrichment: {
-    label: 'Generating semantic tags',
-    icon: <Brain size={14} />,
-    desc: 'Creating 30-50 searchable tags per bookmark for AI search',
-  },
-  categorize: {
-    label: 'Categorizing',
-    icon: <Layers size={14} />,
-    desc: 'Assigning each bookmark to the most relevant categories',
-  },
-  parallel: {
-    label: 'Processing all stages in parallel',
-    icon: <Sparkles size={14} />,
-    desc: 'Vision, enrichment, and categorization running concurrently across 20 workers',
-  },
+function useStageInfo(): Record<NonNullable<Stage>, { label: string; icon: React.ReactNode; desc: string }> {
+  const { t } = useLocale()
+  return {
+    vision: { label: t('import.stage.vision'), icon: <Eye size={14} />, desc: t('import.stage.visionDesc') },
+    entities: { label: t('import.stage.entities'), icon: <Tag size={14} />, desc: t('import.stage.entitiesDesc') },
+    enrichment: { label: t('import.stage.enrichment'), icon: <Brain size={14} />, desc: t('import.stage.enrichmentDesc') },
+    categorize: { label: t('import.stage.categorize'), icon: <Layers size={14} />, desc: t('import.stage.categorizeDesc') },
+    parallel: { label: t('import.stage.parallel'), icon: <Sparkles size={14} />, desc: t('import.stage.parallelDesc') },
+  }
 }
 
 // ── Bookmarklet script (captures Twitter/X bookmark API responses as you scroll) ──
@@ -379,7 +363,8 @@ function DraggableBookmarklet() {
 // ── Components ────────────────────────────────────────────────────────────────
 
 function StepIndicator({ current }: { current: Step }) {
-  const steps = ['Upload', 'Importing', 'Categorize']
+  const { t } = useLocale()
+  const steps = [t('import.step.upload'), t('import.step.importing'), t('import.step.categorize')]
   return (
     <div className="flex items-center gap-2 mb-8">
       {steps.map((label, i) => {
@@ -403,6 +388,7 @@ function StepIndicator({ current }: { current: Step }) {
 }
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useLocale()
   const [copied, setCopied] = useState(false)
   function handleCopy() {
     navigator.clipboard.writeText(text).then(() => {
@@ -416,12 +402,13 @@ function CopyButton({ text }: { text: string }) {
       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors"
     >
       {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-      {copied ? 'Copied!' : 'Copy'}
+      {copied ? t('import.copied') : t('import.copy')}
     </button>
   )
 }
 
 function UploadZone({ onFile }: { onFile: (file: File) => void }) {
+  const { t } = useLocale()
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
 
@@ -448,43 +435,40 @@ function UploadZone({ onFile }: { onFile: (file: File) => void }) {
       }`}
     >
       <Upload size={28} className="mx-auto mb-3 text-zinc-500" />
-      <p className="text-zinc-300 font-medium text-sm">Drop your JSON file here</p>
-      <p className="text-zinc-600 text-xs mt-1">or click to browse</p>
+      <p className="text-zinc-300 font-medium text-sm">{t('import.dropZone')}</p>
+      <p className="text-zinc-600 text-xs mt-1">{t('import.dropZoneOr')}</p>
       <input ref={inputRef} type="file" accept=".json" className="hidden" onChange={handleFileChange} />
     </div>
   )
 }
 
 function BookmarkletTab({ onFile, importSource }: { onFile: (file: File) => void; importSource: 'bookmark' | 'like' }) {
+  const { t } = useLocale()
   const targetUrl = importSource === 'like' ? 'https://x.com' : 'https://x.com/i/bookmarks'
   const targetLabel = importSource === 'like' ? 'x.com/YourUsername/likes' : 'x.com/i/bookmarks'
   const sourceLabel = importSource === 'like' ? 'likes' : 'bookmarks'
   const steps = [
     {
       num: 1,
-      title: 'Add the bookmarklet to your bookmark bar',
+      title: t('import.bookmarkletStep1'),
       content: (
         <div className="mt-2 space-y-3">
-          <p className="text-xs text-zinc-500">
-            Show your bookmark bar first: <strong className="text-zinc-300">View → Show Bookmarks Bar</strong>
-          </p>
-          {/* Option A: Drag */}
+          <p className="text-xs text-zinc-500">{t('import.bookmarkletStep1ShowBar')}</p>
           <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/60 border border-zinc-700/50">
             <div className="shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold">A</div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-zinc-300 mb-1.5">Drag to bookmark bar</p>
+              <p className="text-xs font-medium text-zinc-300 mb-1.5">{t('import.bookmarkletStep1DragLabel')}</p>
               <DraggableBookmarklet />
             </div>
           </div>
-          {/* Option B: Manual (more reliable in Chrome) */}
           <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-800/60 border border-zinc-700/50">
             <div className="shrink-0 w-6 h-6 rounded-full bg-zinc-600/40 text-zinc-400 flex items-center justify-center text-xs font-bold mt-0.5">B</div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-zinc-300 mb-1.5">Manual (works in all browsers)</p>
+              <p className="text-xs font-medium text-zinc-300 mb-1.5">{t('import.bookmarkletStep1ManualLabel')}</p>
               <ol className="text-xs text-zinc-500 space-y-0.5 mb-2">
-                <li>1. Copy the URL below</li>
-                <li>2. Right-click bookmark bar → <strong className="text-zinc-400">Add bookmark / New bookmark</strong></li>
-                <li>3. Name it <em className="text-zinc-400">Export X Bookmarks</em> and paste the URL</li>
+                {t('import.bookmarkletStep1ManualSteps').split('\n').map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
               </ol>
               <CopyButton text={BOOKMARKLET_HREF} />
             </div>
@@ -496,7 +480,6 @@ function BookmarkletTab({ onFile, importSource }: { onFile: (file: File) => void
       num: 2,
       title: (
         <span>
-          Go to{' '}
           <a
             href={targetUrl}
             target="_blank"
@@ -504,36 +487,30 @@ function BookmarkletTab({ onFile, importSource }: { onFile: (file: File) => void
             className="text-indigo-400 hover:underline inline-flex items-center gap-1"
           >
             {targetLabel} <ExternalLink size={11} />
-          </a>{' '}
-          while logged in
+          </a>
         </span>
       ),
     },
     {
       num: 3,
-      title: `Click "Export X Bookmarks" in your bookmark bar`,
+      title: t('import.bookmarkletStep3'),
       content: (
-        <p className="text-xs text-zinc-500 mt-1">
-          A purple Export button will appear on the page
-        </p>
+        <p className="text-xs text-zinc-500 mt-1">{t('import.bookmarkletStep3Desc')}</p>
       ),
     },
     {
       num: 4,
-      title: 'Click "▶ Auto-scroll" to capture all bookmarks automatically',
+      title: t('import.bookmarkletStep4'),
       content: (
-        <p className="text-xs text-zinc-500 mt-1">
-          A second button appears below the export button. Click it and it will scroll through all your bookmarks automatically — stopping when done. Or scroll manually if you prefer.
-        </p>
+        <p className="text-xs text-zinc-500 mt-1">{t('import.bookmarkletStep4Desc')}</p>
       ),
     },
     {
       num: 5,
-      title: `Click the purple "Export N ${sourceLabel}" button`,
+      title: `Export N ${sourceLabel}`,
       content: (
         <p className="text-xs text-zinc-500 mt-1">
-          A <code className="text-xs bg-zinc-800 px-1 py-0.5 rounded">{sourceLabel}.json</code> file will download automatically.
-          Upload it below.
+          <code className="text-xs bg-zinc-800 px-1 py-0.5 rounded">{sourceLabel}.json</code>
         </p>
       ),
     },
@@ -556,7 +533,7 @@ function BookmarkletTab({ onFile, importSource }: { onFile: (file: File) => void
       </ol>
 
       <div className="border-t border-zinc-800 pt-5">
-        <p className="text-xs text-zinc-500 mb-3 uppercase tracking-wider font-medium">Upload the downloaded file</p>
+        <p className="text-xs text-zinc-500 mb-3 uppercase tracking-wider font-medium">{t('import.uploadLabel')}</p>
         <UploadZone onFile={onFile} />
       </div>
     </div>
@@ -564,6 +541,7 @@ function BookmarkletTab({ onFile, importSource }: { onFile: (file: File) => void
 }
 
 function ConsoleTab({ onFile, importSource }: { onFile: (file: File) => void; importSource: 'bookmark' | 'like' }) {
+  const { t } = useLocale()
   const targetUrl = importSource === 'like' ? 'https://x.com' : 'https://x.com/i/bookmarks'
   const targetLabel = importSource === 'like' ? 'x.com/YourUsername/likes' : 'x.com/i/bookmarks'
   const sourceLabel = importSource === 'like' ? 'likes' : 'bookmarks'
@@ -572,7 +550,6 @@ function ConsoleTab({ onFile, importSource }: { onFile: (file: File) => void; im
       num: 1,
       title: (
         <span>
-          Go to{' '}
           <a
             href={targetUrl}
             target="_blank"
@@ -580,30 +557,27 @@ function ConsoleTab({ onFile, importSource }: { onFile: (file: File) => void; im
             className="text-indigo-400 hover:underline inline-flex items-center gap-1"
           >
             {targetLabel} <ExternalLink size={11} />
-          </a>{' '}
-          while logged in
+          </a>
         </span>
       ),
     },
     {
       num: 2,
-      title: 'Open browser DevTools and go to the Console tab',
+      title: t('import.consoleStep2'),
       content: (
         <p className="text-xs text-zinc-500 mt-1">
-          Press <kbd className="text-xs bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded font-mono">F12</kbd> on Windows/Linux or{' '}
-          <kbd className="text-xs bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded font-mono">⌘⌥J</kbd> on Mac,
-          then click the <strong className="text-zinc-300">Console</strong> tab
+          {t('import.consoleStep2Desc')}
         </p>
       ),
     },
     {
       num: 3,
-      title: 'Paste and run the script below',
+      title: t('import.consoleStep3'),
       content: (
         <div className="mt-2">
           <div className="relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950">
             <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-              <span className="text-xs text-zinc-600 font-mono">console script</span>
+              <span className="text-xs text-zinc-600 font-mono">{t('import.consoleScript')}</span>
               <CopyButton text={CONSOLE_SCRIPT} />
             </div>
             <pre className="text-xs text-zinc-400 p-3 overflow-auto max-h-40 font-mono leading-relaxed">
@@ -615,12 +589,8 @@ function ConsoleTab({ onFile, importSource }: { onFile: (file: File) => void; im
     },
     {
       num: 4,
-      title: `Press Enter, then scroll through all your ${sourceLabel}`,
-      content: (
-        <p className="text-xs text-zinc-500 mt-1">
-          A purple button will appear. Scroll slowly to capture all {sourceLabel}, then click the button to download.
-        </p>
-      ),
+      title: `${sourceLabel}`,
+      content: null,
     },
   ]
 
@@ -641,7 +611,7 @@ function ConsoleTab({ onFile, importSource }: { onFile: (file: File) => void; im
       </ol>
 
       <div className="border-t border-zinc-800 pt-5">
-        <p className="text-xs text-zinc-500 mb-3 uppercase tracking-wider font-medium">Upload the downloaded file</p>
+        <p className="text-xs text-zinc-500 mb-3 uppercase tracking-wider font-medium">{t('import.uploadLabel')}</p>
         <UploadZone onFile={onFile} />
       </div>
     </div>
@@ -659,6 +629,7 @@ interface OAuthStatus {
 }
 
 function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void }) {
+  const { t } = useLocale()
   const [status, setStatus] = useState<OAuthStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)
@@ -757,11 +728,11 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
       <div className="text-xs text-zinc-500 space-y-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-4">
         <p className="text-zinc-300 font-medium text-sm mb-2 flex items-center gap-2">
           <ExternalLink size={14} className="text-indigo-400" />
-          X OAuth 2.0 (Recommended)
+          {t('import.liveTitle')}
         </p>
-        <p>Connect your X account using the official OAuth 2.0 flow. This is the X-approved method — no cookies or session tokens needed.</p>
-        <p className="text-zinc-600 mt-1">Requires X OAuth Client ID in Settings. Scopes: bookmark.read, tweet.read, users.read</p>
-        <p className="text-amber-400/80 mt-2 font-medium">Note: The X API requires a paid Basic tier ($200/mo) or higher for bookmark.read scope access. The free tier does not support fetching bookmarks.</p>
+        <p>{t('import.liveDesc')}</p>
+        <p className="text-zinc-600 mt-1">{t('import.liveScopes')}</p>
+        <p className="text-amber-400/80 mt-2 font-medium">{t('import.livePaid')}</p>
       </div>
 
       {/* Not configured */}
@@ -769,10 +740,10 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
         <div className="flex items-center gap-3 p-3.5 rounded-xl bg-amber-500/8 border border-amber-500/20">
           <AlertCircle size={15} className="text-amber-400 shrink-0" />
           <div>
-            <p className="text-sm text-amber-300">X OAuth not configured</p>
+            <p className="text-sm text-amber-300">{t('import.notConfigured')}</p>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Add your X OAuth Client ID (and optionally Client Secret) in{' '}
-              <Link href="/settings" className="text-indigo-400 hover:underline">Settings</Link>
+              {t('import.notConfiguredDesc')}{' '}
+              <Link href="/settings" className="text-indigo-400 hover:underline">{t('nav.settings')}</Link>
             </p>
           </div>
         </div>
@@ -788,12 +759,12 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
           {connecting ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              Redirecting to X...
+              {t('import.redirecting')}
             </>
           ) : (
             <>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              Connect X Account
+              {t('import.connectX')}
             </>
           )}
         </button>
@@ -806,7 +777,7 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
             <div className="flex items-center gap-2.5">
               <CheckCircle size={15} className="text-emerald-400 shrink-0" />
               <div>
-                <span className="text-sm text-emerald-300">Connected to X</span>
+                <span className="text-sm text-emerald-300">{t('import.connectedX')}</span>
                 {status.user?.username && (
                   <span className="text-xs text-zinc-500 ml-2">
                     <User size={11} className="inline -mt-0.5 mr-0.5" />
@@ -819,7 +790,6 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
               onClick={handleDisconnect}
               disabled={disconnecting}
               className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-              title="Disconnect X account"
             >
               {disconnecting ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />}
             </button>
@@ -828,7 +798,7 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
           {status.tokenExpired && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/8 border border-amber-500/20">
               <AlertCircle size={14} className="text-amber-400 shrink-0" />
-              <p className="text-xs text-amber-300">Token expired. Yadorigi will try to auto-refresh, or you can reconnect.</p>
+              <p className="text-xs text-amber-300">{t('import.tokenExpired')}</p>
             </div>
           )}
 
@@ -840,12 +810,12 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
             {syncing ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Fetching bookmarks...
+                {t('import.fetching')}
               </>
             ) : (
               <>
                 <RefreshCw size={16} />
-                Fetch Bookmarks from X
+                {t('import.fetchBookmarks')}
               </>
             )}
           </button>
@@ -862,6 +832,7 @@ function LiveImportTab({ onSynced }: { onSynced: (result: ImportResult) => void 
 }
 
 function InstructionsStep({ onFile, importSource, onLiveSynced }: { onFile: (file: File) => void; importSource: 'bookmark' | 'like'; onLiveSynced: (result: ImportResult) => void }) {
+  const { t } = useLocale()
   const [method, setMethod] = useState<Method>('bookmarklet')
 
   return (
@@ -877,8 +848,8 @@ function InstructionsStep({ onFile, importSource, onLiveSynced }: { onFile: (fil
           }`}
         >
           <RefreshCw size={13} className="inline -mt-0.5 mr-1" />
-          Live Import
-          <span className="ml-1.5 text-xs text-indigo-400 font-normal">Recommended</span>
+          {t('import.tab.live')}
+          <span className="ml-1.5 text-xs text-indigo-400 font-normal">{t('import.tab.liveRecommended')}</span>
         </button>
         <button
           onClick={() => setMethod('bookmarklet')}
@@ -888,7 +859,7 @@ function InstructionsStep({ onFile, importSource, onLiveSynced }: { onFile: (fil
               : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
-          Bookmarklet
+          {t('import.tab.bookmarklet')}
         </button>
         <button
           onClick={() => setMethod('console')}
@@ -898,7 +869,7 @@ function InstructionsStep({ onFile, importSource, onLiveSynced }: { onFile: (fil
               : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
-          {'</>'} Console
+          {t('import.tab.console')}
         </button>
       </div>
 
@@ -916,12 +887,13 @@ function InstructionsStep({ onFile, importSource, onLiveSynced }: { onFile: (fil
 function ImportingStep({ result }: {
   result: ImportResult | null
 }) {
+  const { t } = useLocale()
   if (!result) {
     return (
       <div className="flex flex-col items-center gap-4 py-10">
         <Loader2 size={40} className="text-indigo-400 animate-spin" />
-        <p className="text-zinc-300 text-lg font-medium">Importing bookmarks...</p>
-        <p className="text-zinc-500 text-sm">This may take a moment</p>
+        <p className="text-zinc-300 text-lg font-medium">{t('import.importing')}</p>
+        <p className="text-zinc-500 text-sm">{t('import.importWait')}</p>
       </div>
     )
   }
@@ -932,21 +904,22 @@ function ImportingStep({ result }: {
         <CheckCircle size={32} className="text-emerald-400" />
       </div>
       <div className="text-center">
-        <p className="text-xl font-bold text-zinc-100">Import Complete</p>
+        <p className="text-xl font-bold text-zinc-100">{t('import.importComplete')}</p>
         <p className="text-zinc-400 mt-1">
-          <span className="text-emerald-400 font-semibold">{result.imported}</span> imported,{' '}
-          <span className="text-zinc-500">{result.skipped} skipped</span> as duplicates
+          {t('import.importResult', { imported: result.imported, skipped: result.skipped })}
         </p>
       </div>
       <div className="flex items-center gap-2 text-indigo-400 text-sm">
         <Loader2 size={14} className="animate-spin" />
-        Starting AI categorization…
+        {t('import.startingAI')}
       </div>
     </div>
   )
 }
 
 function CategorizeStep({ importedCount, force = false }: { importedCount: number; force?: boolean }) {
+  const { t } = useLocale()
+  const STAGE_INFO = useStageInfo()
   const [status, setStatus] = useState<CategorizeStatus | null>(null)
   const [running, setRunning] = useState(false)
   const [stopping, setStopping] = useState(false)
@@ -1062,7 +1035,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
             onClick={() => void startCategorization()}
             className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
           >
-            Retry Categorization
+            {t('import.retryCategorize')}
           </button>
         </div>
       )}
@@ -1085,10 +1058,10 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
           {status?.stageCounts && (
             <div className="space-y-1.5">
               {([
-                { key: 'visionTagged', label: 'images analyzed', icon: <Eye size={13} />, active: status.stage === 'vision' || status.stage === 'parallel' },
-                { key: 'entitiesExtracted', label: 'entities extracted', icon: <Tag size={13} />, active: status.stage === 'entities' },
-                { key: 'enriched', label: 'bookmarks enriched', icon: <Brain size={13} />, active: status.stage === 'enrichment' || status.stage === 'parallel' },
-                { key: 'categorized', label: 'categorized', icon: <Layers size={13} />, active: status.stage === 'categorize' || status.stage === 'parallel' },
+                { key: 'visionTagged', label: t('import.counter.vision'), icon: <Eye size={13} />, active: status.stage === 'vision' || status.stage === 'parallel' },
+                { key: 'entitiesExtracted', label: t('import.counter.entities'), icon: <Tag size={13} />, active: status.stage === 'entities' },
+                { key: 'enriched', label: t('import.counter.enriched'), icon: <Brain size={13} />, active: status.stage === 'enrichment' || status.stage === 'parallel' },
+                { key: 'categorized', label: t('import.counter.categorized'), icon: <Layers size={13} />, active: status.stage === 'categorize' || status.stage === 'parallel' },
               ] as { key: keyof StageCounts; label: string; icon: React.ReactNode; active: boolean }[]).map(({ key, label, icon, active }) => {
                 const count = status.stageCounts[key]
                 const total = key === 'categorized' ? status.total : null
@@ -1100,7 +1073,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
                     </span>
                     <span className="text-zinc-500 text-sm">
                       {label}
-                      {total != null && total > 0 ? <span className="text-zinc-600"> — {total - count} remaining</span> : null}
+                      {total != null && total > 0 ? <span className="text-zinc-600"> — {t('import.remaining', { n: total - count })}</span> : null}
                     </span>
                     {active && <Loader2 size={12} className="text-indigo-400 animate-spin ml-auto shrink-0" />}
                     {!active && count > 0 && <CheckCircle size={12} className="text-emerald-500 ml-auto shrink-0" />}
@@ -1117,7 +1090,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-red-400 text-sm font-medium transition-colors border border-red-500/20"
           >
             <StopCircle size={15} />
-            {stopping ? 'Stopping…' : 'Stop pipeline'}
+            {stopping ? t('import.stopping') : t('import.stopPipeline')}
           </button>
 
           {status?.lastError && (
@@ -1130,7 +1103,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
           {(status?.stage === 'categorize' || status?.stage === 'parallel') && (
             <div className="space-y-2">
               <div className="flex justify-between text-xs text-zinc-500">
-                <span>{status.done} / {status.total} bookmarks</span>
+                <span>{t('import.progress', { done: status.done, total: status.total })}</span>
                 <span>{progress}%</span>
               </div>
               <Progress.Root className="relative h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
@@ -1150,12 +1123,12 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
             <CheckCircle size={32} className="text-emerald-400" />
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-zinc-100">Categorization Complete!</p>
+            <p className="text-xl font-bold text-zinc-100">{t('import.categorizeComplete')}</p>
             {status?.stageCounts && (
               <p className="text-zinc-500 text-sm mt-1">
-                {status.stageCounts.visionTagged} images analyzed ·{' '}
-                {status.stageCounts.enriched} bookmarks enriched ·{' '}
-                {status.stageCounts.categorized} categorized
+                {status.stageCounts.visionTagged} {t('import.counter.vision')} ·{' '}
+                {status.stageCounts.enriched} {t('import.counter.enriched')} ·{' '}
+                {status.stageCounts.categorized} {t('import.counter.categorized')}
               </p>
             )}
           </div>
@@ -1164,7 +1137,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
               href="/bookmarks"
               className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
             >
-              View your bookmarks
+              {t('import.viewBookmarks')}
               <ChevronRight size={16} />
             </Link>
             <button
@@ -1172,7 +1145,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
               className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors border border-zinc-700"
             >
               <RefreshCw size={14} />
-              Reprocess all
+              {t('import.reprocessAll')}
             </button>
           </div>
         </div>
@@ -1185,15 +1158,15 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
             <CheckCircle size={32} className="text-zinc-500" />
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-zinc-100">Already up to date</p>
-            <p className="text-zinc-500 text-sm mt-1">All bookmarks in this file were already imported</p>
+            <p className="text-xl font-bold text-zinc-100">{t('import.upToDate')}</p>
+            <p className="text-zinc-500 text-sm mt-1">{t('import.upToDateDesc')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href="/bookmarks"
               className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
             >
-              View your bookmarks
+              {t('import.viewBookmarks')}
               <ChevronRight size={16} />
             </Link>
             <button
@@ -1201,7 +1174,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
               className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors border border-zinc-700"
             >
               <RefreshCw size={14} />
-              Reprocess all
+              {t('import.reprocessAll')}
             </button>
           </div>
         </div>
@@ -1211,6 +1184,7 @@ function CategorizeStep({ importedCount, force = false }: { importedCount: numbe
 }
 
 function UncategorizedBanner({ onCategorize, onReprocess }: { onCategorize: () => void; onReprocess: () => void }) {
+  const { t } = useLocale()
   const [totalBookmarks, setTotalBookmarks] = useState<number | null>(null)
   const [uncategorized, setUncategorized] = useState<number | null>(null)
 
@@ -1238,7 +1212,7 @@ function UncategorizedBanner({ onCategorize, onReprocess }: { onCategorize: () =
           <div className="flex items-center gap-2.5 min-w-0">
             <Sparkles size={15} className="text-indigo-400 shrink-0" />
             <p className="text-sm text-indigo-300">
-              <span className="font-semibold">{uncategorized.toLocaleString()}</span> bookmarks not yet processed
+              {t('import.uncategorizedBanner', { n: uncategorized.toLocaleString() })}
             </p>
           </div>
           <button
@@ -1246,7 +1220,7 @@ function UncategorizedBanner({ onCategorize, onReprocess }: { onCategorize: () =
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors shrink-0"
           >
             <Sparkles size={12} />
-            Process
+            {t('import.process')}
           </button>
         </div>
       )}
@@ -1254,7 +1228,7 @@ function UncategorizedBanner({ onCategorize, onReprocess }: { onCategorize: () =
         <div className="flex items-center gap-2.5 min-w-0">
           <RefreshCw size={15} className="text-zinc-400 shrink-0" />
           <p className="text-sm text-zinc-400">
-            Re-analyze all <span className="font-semibold text-zinc-300">{totalBookmarks.toLocaleString()}</span> bookmarks from scratch
+            {t('import.reanalyze', { n: totalBookmarks.toLocaleString() })}
           </p>
         </div>
         <button
@@ -1262,7 +1236,7 @@ function UncategorizedBanner({ onCategorize, onReprocess }: { onCategorize: () =
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-semibold transition-colors shrink-0"
         >
           <RefreshCw size={12} />
-          Reprocess all
+          {t('import.reprocessAll')}
         </button>
       </div>
     </div>
@@ -1270,6 +1244,7 @@ function UncategorizedBanner({ onCategorize, onReprocess }: { onCategorize: () =
 }
 
 export default function ImportPage() {
+  const { t } = useLocale()
   const [step, setStep] = useState<Step>(1)
   const importSource = 'bookmark' as const
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
@@ -1338,15 +1313,15 @@ export default function ImportPage() {
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-zinc-100">Import Bookmarks</h1>
-        <p className="text-zinc-400 mt-1">Export your X/Twitter bookmarks as JSON, then upload below.</p>
+        <h1 className="text-2xl font-bold text-zinc-100">{t('import.title')}</h1>
+        <p className="text-zinc-400 mt-1">{t('import.subtitle')}</p>
       </div>
 
       {step === 1 && <UncategorizedBanner onCategorize={() => setStep(3)} onReprocess={() => { setForceReprocess(true); setStep(3) }} />}
 
       {importError && (
         <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-4">
-          Import failed: {importError}
+          {t('import.error', { msg: importError })}
         </p>
       )}
 

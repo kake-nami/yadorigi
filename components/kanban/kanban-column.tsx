@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { BookmarkWithMedia, BookmarkStatus } from '@/lib/types';
@@ -9,9 +10,11 @@ import { KanbanCard } from './kanban-card';
 interface Props {
   status: BookmarkStatus;
   bookmarks: BookmarkWithMedia[];
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
 }
 
-export function KanbanColumn({ status, bookmarks }: Props) {
+export const KanbanColumn = memo(function KanbanColumn({ status, bookmarks, selectedIds, onToggleSelect }: Props) {
   const { t } = useLocale();
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
@@ -39,7 +42,12 @@ export function KanbanColumn({ status, bookmarks }: Props) {
       >
         <SortableContext items={bookmarks.map(b => b.id)} strategy={verticalListSortingStrategy}>
           {bookmarks.map(b => (
-            <KanbanCard key={b.id} bookmark={b} />
+            <KanbanCard
+              key={b.id}
+              bookmark={b}
+              isSelected={selectedIds.has(b.id)}
+              onToggleSelect={onToggleSelect}
+            />
           ))}
         </SortableContext>
         {bookmarks.length === 0 && (
@@ -53,4 +61,4 @@ export function KanbanColumn({ status, bookmarks }: Props) {
       </div>
     </div>
   );
-}
+});

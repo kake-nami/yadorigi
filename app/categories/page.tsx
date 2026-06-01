@@ -5,16 +5,17 @@ import { Plus, Tag, X, ArrowRight, Folder, Bookmark, Sparkles, Loader2, Check } 
 import * as Dialog from '@radix-ui/react-dialog'
 import Link from 'next/link'
 import type { Category } from '@/lib/types'
+import { useLocale } from '@/lib/locale-context'
 
 const PRESET_COLORS = [
-  '#6366f1', // indigo
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // violet
-  '#06b6d4', // cyan
-  '#f97316', // orange
-  '#ec4899', // pink
+  '#6366f1',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#06b6d4',
+  '#f97316',
+  '#ec4899',
 ]
 
 interface AddCategoryModalProps {
@@ -24,6 +25,7 @@ interface AddCategoryModalProps {
 }
 
 function AddCategoryModal({ open, onClose, onAdd }: AddCategoryModalProps) {
+  const { t } = useLocale()
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[0])
   const [description, setDescription] = useState('')
@@ -33,7 +35,7 @@ function AddCategoryModal({ open, onClose, onAdd }: AddCategoryModalProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) {
-      setError('Category name is required')
+      setError(t('categories.modal.nameRequired'))
       return
     }
     setError('')
@@ -71,9 +73,9 @@ function AddCategoryModal({ open, onClose, onAdd }: AddCategoryModalProps) {
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl shadow-black/50 focus:outline-none animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <Dialog.Title className="text-lg font-semibold text-zinc-100">New Category</Dialog.Title>
+              <Dialog.Title className="text-lg font-semibold text-zinc-100">{t('categories.modal.newTitle')}</Dialog.Title>
               <Dialog.Description className="text-sm text-zinc-500 mt-0.5">
-                Create a category to organize your bookmarks
+                {t('categories.modal.newDesc')}
               </Dialog.Description>
             </div>
             <button
@@ -87,20 +89,20 @@ function AddCategoryModal({ open, onClose, onAdd }: AddCategoryModalProps) {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                Name <span className="text-red-400">*</span>
+                {t('categories.modal.nameLabel')} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Machine Learning"
+                placeholder={t('categories.modal.namePlaceholder')}
                 autoFocus
                 className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder:text-zinc-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Color</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">{t('categories.modal.colorLabel')}</label>
               <div className="flex gap-2.5 flex-wrap">
                 {PRESET_COLORS.map((c) => (
                   <button
@@ -125,13 +127,13 @@ function AddCategoryModal({ open, onClose, onAdd }: AddCategoryModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                Description{' '}
-                <span className="text-zinc-600 font-normal">(optional)</span>
+                {t('categories.modal.descLabel')}{' '}
+                <span className="text-zinc-600 font-normal">({t('common.loading').includes('…') ? 'optional' : 'optional'})</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of this category..."
+                placeholder={t('categories.modal.descPlaceholder')}
                 rows={3}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder:text-zinc-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200 resize-none"
               />
@@ -150,14 +152,14 @@ function AddCategoryModal({ open, onClose, onAdd }: AddCategoryModalProps) {
                 onClick={handleClose}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium text-zinc-400 bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700"
               >
-                Cancel
+                {t('categories.modal.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={loading}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Creating...' : 'Create Category'}
+                {loading ? t('categories.modal.creating') : t('categories.modal.create')}
               </button>
             </div>
           </form>
@@ -188,6 +190,7 @@ interface AIAssistantModalProps {
 }
 
 function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantModalProps) {
+  const { t, locale } = useLocale()
   const [suggestions, setSuggestions] = useState<CategorySuggestion[]>([])
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
@@ -271,10 +274,10 @@ function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantMod
               <div>
                 <Dialog.Title className="text-xl font-semibold text-zinc-100 flex items-center gap-2">
                   <Sparkles size={20} className="text-indigo-400" />
-                  AI Category Assistant
+                  {t('categories.ai.title')}
                 </Dialog.Title>
                 <Dialog.Description className="text-sm text-zinc-500 mt-1">
-                  Analyze your bookmarks and discover natural topic clusters
+                  {t('categories.ai.desc')}
                 </Dialog.Description>
               </div>
               <button
@@ -291,8 +294,8 @@ function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantMod
             {loading && (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 size={32} className="text-indigo-400 animate-spin mb-4" />
-                <p className="text-zinc-400">Analyzing your bookmarks...</p>
-                <p className="text-zinc-500 text-sm mt-1">This may take a moment</p>
+                <p className="text-zinc-400">{t('categories.ai.analyzing')}</p>
+                <p className="text-zinc-500 text-sm mt-1">{t('categories.ai.analyzingWait')}</p>
               </div>
             )}
 
@@ -300,22 +303,22 @@ function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantMod
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4">
                 <p className="text-red-400 text-sm">{error}</p>
                 <button onClick={fetchSuggestions} className="mt-2 text-sm text-red-400 hover:text-red-300 underline">
-                  Try again
+                  {t('categories.ai.tryAgain')}
                 </button>
               </div>
             )}
 
             {!loading && !error && suggestions.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-zinc-400">No suggestions available.</p>
-                <p className="text-zinc-500 text-sm mt-1">Make sure you have at least 10 bookmarks imported.</p>
+                <p className="text-zinc-400">{t('categories.ai.noSuggestions')}</p>
+                <p className="text-zinc-500 text-sm mt-1">{t('categories.ai.noSuggestionsDesc')}</p>
               </div>
             )}
 
             {!loading && suggestions.length > 0 && (
               <div className="space-y-4">
                 <p className="text-zinc-400 text-sm">
-                  Found {suggestions.length} potential categories. Select the ones you want to create:
+                  {t('categories.ai.found', { n: suggestions.length })}
                 </p>
                 {suggestions.map((suggestion) => (
                   <div
@@ -341,13 +344,15 @@ function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantMod
                         <div className="flex items-center gap-2 mb-1">
                           <span className="w-3 h-3 rounded-full" style={{ backgroundColor: suggestion.color }} />
                           <h3 className="font-semibold text-zinc-100">{suggestion.name}</h3>
-                          <span className="text-xs text-zinc-500">{suggestion.bookmarkCount} bookmarks</span>
-                          <span className="text-xs text-zinc-600">{(suggestion.confidence * 100).toFixed(0)}% confidence</span>
+                          <span className="text-xs text-zinc-500">
+                            {t('categories.ai.found', { n: suggestion.bookmarkCount }).split('件')[0]}件
+                          </span>
+                          <span className="text-xs text-zinc-600">{(suggestion.confidence * 100).toFixed(0)}%</span>
                         </div>
                         <p className="text-sm text-zinc-400 mb-2">{suggestion.description}</p>
                         {suggestion.exampleBookmarks.length > 0 && (
                           <div className="space-y-1.5">
-                            <p className="text-xs text-zinc-500">Example bookmarks:</p>
+                            <p className="text-xs text-zinc-500">{t('categories.ai.exampleBookmarks')}</p>
                             {suggestion.exampleBookmarks.map((bm) => (
                               <div key={bm.tweetId} className="text-xs text-zinc-600 bg-zinc-800/50 rounded px-2 py-1.5 line-clamp-1">
                                 <span className="text-zinc-500">@{bm.authorHandle}:</span> {bm.text}
@@ -367,7 +372,7 @@ function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantMod
             <div className="p-6 border-t border-zinc-800 bg-zinc-900/50">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-zinc-500">
-                  {selectedSuggestions.size} of {suggestions.length} selected
+                  {t('categories.ai.selected', { selected: selectedSuggestions.size, total: suggestions.length })}
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -375,7 +380,7 @@ function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantMod
                     disabled={creating}
                     className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-400 hover:text-zinc-300 transition-colors"
                   >
-                    Clear all
+                    {t('categories.ai.clearAll')}
                   </button>
                   <button
                     onClick={handleCreateSelected}
@@ -383,9 +388,9 @@ function AIAssistantModal({ open, onClose, onCategoriesCreated }: AIAssistantMod
                     className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {creating ? (
-                      <><Loader2 size={16} className="animate-spin" /> Creating...</>
+                      <><Loader2 size={16} className="animate-spin" /> {t('categories.ai.creating')}</>
                     ) : (
-                      <><Plus size={16} /> Create {selectedSuggestions.size} categories</>
+                      <><Plus size={16} /> {t('categories.ai.createSelected', { n: selectedSuggestions.size })}</>
                     )}
                   </button>
                 </div>
@@ -403,6 +408,7 @@ interface CategoryDisplayCardProps {
 }
 
 function CategoryDisplayCard({ category }: CategoryDisplayCardProps) {
+  const { t } = useLocale()
   return (
     <div
       className="bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-zinc-700 transition-all duration-200 overflow-hidden group"
@@ -423,7 +429,7 @@ function CategoryDisplayCard({ category }: CategoryDisplayCardProps) {
         {category.description ? (
           <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2 mb-4">{category.description}</p>
         ) : (
-          <p className="text-sm text-zinc-600 italic mb-4">No description</p>
+          <p className="text-sm text-zinc-600 italic mb-4">{t('categories.noDescription')}</p>
         )}
 
         <div className="flex items-center justify-between">
@@ -435,7 +441,7 @@ function CategoryDisplayCard({ category }: CategoryDisplayCardProps) {
             href={`/categories/${category.slug}`}
             className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-indigo-400 transition-colors group-hover:text-zinc-400 font-medium"
           >
-            View bookmarks
+            {t('categories.viewBookmarks')}
             <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
@@ -461,6 +467,7 @@ function SkeletonCard() {
 }
 
 export default function CategoriesPage() {
+  const { t } = useLocale()
   const [categories, setCategories] = useState<Category[]>([])
   const [totalBookmarks, setTotalBookmarks] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -494,9 +501,9 @@ export default function CategoriesPage() {
       {/* Page Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <p className="text-xs text-zinc-500 uppercase tracking-widest font-medium mb-1">Organization</p>
+          <p className="text-xs text-zinc-500 uppercase tracking-widest font-medium mb-1">{t('categories.label')}</p>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-zinc-100">Categories</h1>
+            <h1 className="text-2xl font-bold text-zinc-100">{t('categories.title')}</h1>
             {!loading && categories.length > 0 && (
               <span className="px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-xs font-medium">
                 {categories.length}
@@ -505,10 +512,10 @@ export default function CategoriesPage() {
           </div>
           <p className="text-zinc-400 mt-1 text-sm">
             {loading
-              ? 'Loading your categories...'
+              ? t('categories.loadingDesc')
               : categories.length > 0
-              ? `${totalBookmarks.toLocaleString()} bookmarks across ${categories.length} categories`
-              : 'Organize your bookmarks by topic'}
+              ? t('categories.stats', { bookmarks: totalBookmarks.toLocaleString(), count: categories.length })
+              : t('categories.emptyDesc')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -517,14 +524,14 @@ export default function CategoriesPage() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 text-sm font-medium transition-colors"
           >
             <Sparkles size={16} className="text-indigo-400" />
-            AI Assistant
+            {t('categories.aiAssistant')}
           </button>
           <button
             onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors shadow-lg shadow-indigo-500/20"
           >
             <Plus size={16} />
-            Add Category
+            {t('categories.addCategory')}
           </button>
         </div>
       </div>
@@ -544,16 +551,16 @@ export default function CategoriesPage() {
           <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-5">
             <Folder size={28} className="text-zinc-700" />
           </div>
-          <h3 className="text-lg font-semibold text-zinc-300 mb-2">No categories yet</h3>
+          <h3 className="text-lg font-semibold text-zinc-300 mb-2">{t('categories.emptyTitle')}</h3>
           <p className="text-zinc-500 text-sm mb-6 max-w-xs leading-relaxed">
-            Create your first category to start organizing your bookmarks by topic.
+            {t('categories.emptyCreateDesc')}
           </p>
           <button
             onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors"
           >
             <Plus size={15} />
-            Create first category
+            {t('categories.createFirst')}
           </button>
         </div>
       )}
@@ -567,16 +574,16 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      {/* Hint for empty categories */}
+      {/* Hint */}
       {!loading && categories.length > 0 && (
         <div className="mt-8 flex items-center gap-3 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
           <Tag size={15} className="text-indigo-400 shrink-0" />
           <p className="text-sm text-zinc-500">
-            Tip: Use{' '}
+            {t('categories.tip')}
             <Link href="/categorize" className="text-indigo-400 hover:text-indigo-300 transition-colors">
-              AI Categorize
-            </Link>{' '}
-            to automatically assign bookmarks to your categories.
+              {t('categories.tipLinkText')}
+            </Link>
+            {t('categories.tipSuffix')}
           </p>
         </div>
       )}

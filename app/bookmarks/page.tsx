@@ -21,6 +21,7 @@ import BookmarkCard from '@/components/bookmark-card'
 import BookmarkRow from '@/components/bookmark-row'
 import BookmarkDetailModal from '@/components/bookmark-detail-modal'
 import type { BookmarkWithMedia, BookmarksResponse } from '@/lib/types'
+import { useLocale } from '@/lib/locale-context'
 
 const DEFAULT_PAGE_SIZE = 24
 const COMPACT_PAGE_SIZE = 100
@@ -144,6 +145,7 @@ function Pagination({
   limit: number
   onChange: (p: number) => void
 }) {
+  const { t } = useLocale()
   const totalPages = Math.ceil(total / limit)
   const [jumpValue, setJumpValue] = useState('')
 
@@ -163,9 +165,8 @@ function Pagination({
 
   return (
     <div className="flex items-center justify-center gap-3 mt-12">
-      {/* Jump to page */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-zinc-500 select-none">Jump to page</span>
+        <span className="text-sm text-zinc-500 select-none">{t('bookmarks.jumpToPage')}</span>
         <input
           type="number"
           min={1}
@@ -178,23 +179,21 @@ function Pagination({
         />
       </div>
 
-      {/* Page indicator */}
       <span className="text-sm text-zinc-600 select-none tabular-nums">
-        Page <span className="text-zinc-400">{page}</span> of <span className="text-zinc-400">{totalPages}</span>
+        {t('bookmarks.pageOf', { page, total: totalPages })}
       </span>
 
-      {/* Navigation arrows */}
       <div className="flex items-center gap-1">
-        <button onClick={() => onChange(1)} disabled={page <= 1} className={navBtnClass} title="First page">
+        <button onClick={() => onChange(1)} disabled={page <= 1} className={navBtnClass} title={t('bookmarks.firstPage')}>
           <ChevronsLeft size={14} />
         </button>
-        <button onClick={() => onChange(page - 1)} disabled={page <= 1} className={navBtnClass} title="Previous page">
+        <button onClick={() => onChange(page - 1)} disabled={page <= 1} className={navBtnClass} title={t('bookmarks.prevPage')}>
           <ChevronLeft size={14} />
         </button>
-        <button onClick={() => onChange(page + 1)} disabled={page >= totalPages} className={navBtnClass} title="Next page">
+        <button onClick={() => onChange(page + 1)} disabled={page >= totalPages} className={navBtnClass} title={t('bookmarks.nextPage')}>
           <ChevronRight size={14} />
         </button>
-        <button onClick={() => onChange(totalPages)} disabled={page >= totalPages} className={navBtnClass} title="Last page">
+        <button onClick={() => onChange(totalPages)} disabled={page >= totalPages} className={navBtnClass} title={t('bookmarks.lastPage')}>
           <ChevronsRight size={14} />
         </button>
       </div>
@@ -203,6 +202,7 @@ function Pagination({
 }
 
 function BookmarksPageInner() {
+  const { t, locale } = useLocale()
   const searchParams = useSearchParams()
   const [filters, setFilters] = useState<Filters>(() => ({
     ...DEFAULT_FILTERS,
@@ -265,23 +265,23 @@ function BookmarksPageInner() {
   }
 
   const mediaOptions = [
-    { label: 'Photos', value: 'photo' },
-    { label: 'Videos', value: 'video' },
+    { label: t('bookmarks.photos'), value: 'photo' },
+    { label: t('bookmarks.videos'), value: 'video' },
   ]
 
   const sourceOptions = [
-    { label: 'Bookmarks', value: 'bookmark' },
-    { label: 'Likes', value: 'like' },
+    { label: t('bookmarks.sourceBookmarks'), value: 'bookmark' },
+    { label: t('bookmarks.sourceLikes'), value: 'like' },
   ]
 
   const sortOptions = [
-    { label: 'Newest first', value: 'newest' },
-    { label: 'Oldest first', value: 'oldest' },
+    { label: t('bookmarks.newestFirst'), value: 'newest' },
+    { label: t('bookmarks.oldestFirst'), value: 'oldest' },
   ]
 
   const hasActiveFilters = !!(filters.q || filters.category || filters.mediaType || filters.source || filters.sort !== 'newest' || filters.uncategorized)
 
-  const sortLabel = sortOptions.find((o) => o.value === filters.sort)?.label ?? 'Newest first'
+  const sortLabel = sortOptions.find((o) => o.value === filters.sort)?.label ?? t('bookmarks.newestFirst')
 
   return (
     <div className="flex flex-col h-full">
@@ -296,7 +296,7 @@ function BookmarksPageInner() {
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search bookmarks..."
+                placeholder={t('bookmarks.search')}
                 value={searchInput}
                 onChange={(e) => updateSearch(e.target.value)}
                 className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder:text-zinc-600 text-sm focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all"
@@ -311,27 +311,27 @@ function BookmarksPageInner() {
               )}
             </div>
 
-            {/* Filters */}
+            {/* Media filter */}
             <SelectMenu
               value={filters.mediaType}
               onChange={(v) => updateFilter('mediaType', v)}
               options={mediaOptions}
-              placeholder="All media"
+              placeholder={t('bookmarks.allMedia')}
             />
 
-            {/* Source */}
+            {/* Source filter */}
             <SelectMenu
               value={filters.source}
               onChange={(v) => updateFilter('source', v)}
               options={sourceOptions}
-              placeholder="All sources"
+              placeholder={t('bookmarks.allSources')}
             />
 
             {/* Sort */}
             <button
               onClick={() => updateFilter('sort', filters.sort === 'newest' ? 'oldest' : 'newest')}
               className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 transition-all shrink-0"
-              title={`Sort: ${sortLabel}`}
+              title={sortLabel}
             >
               <ArrowUpDown size={13} />
               <span className="hidden sm:inline">{sortLabel}</span>
@@ -344,7 +344,7 @@ function BookmarksPageInner() {
                 className={`p-1.5 rounded-lg transition-all ${
                   viewMode === 'grid' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-600 hover:text-zinc-300'
                 }`}
-                aria-label="Masonry view"
+                aria-label={t('bookmarks.masonryView')}
               >
                 <LayoutGrid size={14} />
               </button>
@@ -353,7 +353,7 @@ function BookmarksPageInner() {
                 className={`p-1.5 rounded-lg transition-all ${
                   viewMode === 'list' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-600 hover:text-zinc-300'
                 }`}
-                aria-label="List view"
+                aria-label={t('bookmarks.listView')}
               >
                 <List size={14} />
               </button>
@@ -362,7 +362,7 @@ function BookmarksPageInner() {
                 className={`p-1.5 rounded-lg transition-all ${
                   viewMode === 'compact' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-600 hover:text-zinc-300'
                 }`}
-                aria-label="Compact view"
+                aria-label={t('bookmarks.compactView')}
               >
                 <AlignJustify size={14} />
               </button>
@@ -375,7 +375,7 @@ function BookmarksPageInner() {
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               {filters.uncategorized && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium">
-                  Uncategorized
+                  {t('bookmarks.uncategorized')}
                   <button onClick={() => updateFilter('uncategorized', false)} className="text-amber-400 hover:text-amber-200 transition-colors"><X size={10} /></button>
                 </span>
               )}
@@ -404,7 +404,7 @@ function BookmarksPageInner() {
                 </span>
               )}
               <button onClick={clearAllFilters} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors underline underline-offset-2">
-                Clear all
+                {t('bookmarks.clearAll')}
               </button>
             </div>
           )}
@@ -420,12 +420,11 @@ function BookmarksPageInner() {
             <p className="text-sm text-zinc-500">
               {total > 0 ? (
                 <>
-                  <span className="text-zinc-200 font-semibold">{total.toLocaleString()}</span>
-                  {' '}bookmark{total !== 1 ? 's' : ''}
-                  {filters.q && <span className="text-zinc-600"> for "{filters.q}"</span>}
+                  <span className="text-zinc-200 font-semibold">{t('bookmarks.resultCount', { n: total.toLocaleString() })}</span>
+                  {filters.q && <span className="text-zinc-600">{t('bookmarks.forQuery', { q: filters.q })}</span>}
                 </>
               ) : (
-                'No bookmarks found'
+                t('bookmarks.noBookmarks')
               )}
             </p>
           </div>
@@ -444,9 +443,9 @@ function BookmarksPageInner() {
             <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-5">
               <BookmarkX size={26} className="text-zinc-700" />
             </div>
-            <h3 className="text-base font-semibold text-zinc-400 mb-2">No bookmarks match your filters</h3>
+            <h3 className="text-base font-semibold text-zinc-400 mb-2">{t('bookmarks.noMatch')}</h3>
             <p className="text-zinc-600 text-sm mb-6 max-w-xs">
-              Try adjusting your search or removing some filters.
+              {t('bookmarks.noMatchDesc')}
             </p>
             {hasActiveFilters && (
               <button
@@ -454,7 +453,7 @@ function BookmarksPageInner() {
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-xl transition-colors border border-zinc-800"
               >
                 <X size={13} />
-                Clear filters
+                {t('bookmarks.clearFilters')}
               </button>
             )}
           </div>
